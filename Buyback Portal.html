@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'">
+<title>Prostarm Buyback Inventory Management &amp; Material Receipt Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#0b3f7a; --blue:#1e5fa8; --sky:#29a9e0; --red:#e8112d; --teal:#00a896; --amber:#d98b0b;
+  --ink:#0f2233; --muted:#5d7387; --line:#d2dce6; --bg:#edf1f6; --panel:#ffffff; --panel2:#f6f9fc;
+  --rail:#0b3f7a; --railink:#cfe2f5; --shadow:0 1px 2px rgba(11,63,122,.10);
+  --display:"Archivo",'Helvetica Neue',Arial,sans-serif;
+  --ui:"IBM Plex Sans",'Helvetica Neue',Arial,sans-serif;
+}
+:root:not([data-theme="light"]){}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#e6eef6; --muted:#93a8bd; --line:#24384d; --bg:#0c1722; --panel:#122130; --panel2:#0f1c29;
+    --rail:#081e33; --railink:#a8c6e4; --shadow:0 1px 2px rgba(0,0,0,.4);
+    --teal:#22c3b0; --amber:#e6a52b; --sky:#3fb7ea;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#e6eef6; --muted:#93a8bd; --line:#24384d; --bg:#0c1722; --panel:#122130; --panel2:#0f1c29;
+  --rail:#081e33; --railink:#a8c6e4; --shadow:0 1px 2px rgba(0,0,0,.4);
+  --teal:#22c3b0; --amber:#e6a52b; --sky:#3fb7ea;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--display);margin:0;letter-spacing:-.015em;line-height:1.15}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue)}
+:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- sign in ---------- */
+#login{min-height:100vh;display:grid;grid-template-columns:minmax(320px,44%) 1fr}
+.li-left{background:var(--rail);color:#fff;padding:44px 40px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.li-left:after{content:"";position:absolute;right:-140px;bottom:-160px;width:420px;height:420px;border-radius:50%;border:56px solid rgba(255,255,255,.045)}
+.li-word{width:min(300px,78%);display:block}
+.li-h{font-family:var(--display);font-weight:800;font-size:clamp(26px,3.3vw,40px);line-height:1.08;margin:34px 0 10px;max-width:15ch}
+.li-sub{color:#a9cbec;max-width:44ch;margin:0}
+.spine{margin:38px 0 0;padding:0;list-style:none;position:relative;z-index:1}
+.spine li{display:flex;gap:14px;align-items:flex-start;padding-bottom:20px;position:relative}
+.spine li:before{content:"";position:absolute;left:11px;top:24px;bottom:0;width:2px;background:rgba(255,255,255,.18)}
+.spine li:last-child{padding-bottom:0}
+.spine li:last-child:before{display:none}
+.spine b{flex:0 0 24px;height:24px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);display:grid;place-items:center;font-size:11px;font-weight:600;font-family:var(--display)}
+.spine span{font-size:13.5px;color:#d5e6f7}
+.spine em{display:block;font-style:normal;color:#8bb4dc;font-size:12.5px}
+.li-foot{color:#7ea9d4;font-size:12px;z-index:1}
+.li-right{display:grid;place-items:center;padding:32px}
+.li-card{width:min(400px,100%)}
+.li-card h2{font-size:22px;font-weight:700;margin-bottom:4px}
+.li-card p.note{color:var(--muted);margin:0 0 26px}
+label.f{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:0 0 5px}
+.inp,select.inp,textarea.inp{width:100%;padding:9px 11px;border:1px solid var(--line);background:var(--panel);border-radius:4px;color:var(--ink)}
+.inp:focus{border-color:var(--blue)}
+.fg{margin-bottom:15px}
+.btn{border:1px solid transparent;border-radius:4px;padding:9px 16px;font-weight:600;font-family:var(--ui);cursor:pointer;background:var(--navy);color:#fff}
+.btn:hover{background:var(--blue)}
+.btn.wide{width:100%;padding:11px}
+.btn.ghost{background:transparent;color:var(--navy);border-color:var(--line)}
+.btn.ghost:hover{background:var(--panel2);color:var(--blue)}
+.btn.teal{background:var(--teal)}
+.btn.red{background:var(--red)}
+.btn.amber{background:var(--amber)}
+.btn.sm{padding:6px 11px;font-size:13px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.err{color:var(--red);font-size:13px;min-height:19px;margin:2px 0 8px}
+.hint{background:var(--panel2);border:1px solid var(--line);border-left:3px solid var(--sky);padding:11px 13px;border-radius:0 4px 4px 0;font-size:12.5px;color:var(--muted);margin-top:22px}
+.hint code{font-family:var(--ui);color:var(--ink);font-weight:600}
+
+/* ---------- shell ---------- */
+#shell{display:none;min-height:100vh;grid-template-columns:224px 1fr}
+.rail{background:var(--rail);color:var(--railink);padding:18px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.rail-top{display:flex;align-items:center;gap:10px;padding:0 18px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.rail-top img{width:30px;height:30px}
+.rail-top div b{display:block;font-family:var(--display);font-weight:700;color:#fff;font-size:14px;letter-spacing:-.01em}
+.rail-top div span{font-size:11px;color:#7ea9d4}
+nav{padding:12px 10px;flex:1;overflow:auto}
+nav a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;border-radius:4px;color:var(--railink);text-decoration:none;font-size:13.5px;font-weight:500;margin-bottom:2px;cursor:pointer}
+nav a:hover{background:rgba(255,255,255,.08);color:#fff}
+nav a.on{background:#fff;color:var(--navy);font-weight:600}
+nav a.on .pill{background:var(--navy);color:#fff}
+.pill{background:rgba(255,255,255,.16);color:#fff;border-radius:9px;padding:1px 7px;font-size:11px;font-weight:600;font-variant-numeric:tabular-nums}
+.rail-me{padding:12px 18px;border-top:1px solid rgba(255,255,255,.1);font-size:12px}
+.rail-me b{display:block;color:#fff;font-size:13px;font-weight:600}
+.rail-me span{color:#7ea9d4}
+.rail-me button{margin-top:9px;background:transparent;border:1px solid rgba(255,255,255,.25);color:#cfe2f5;border-radius:4px;padding:5px 10px;font-size:12px;cursor:pointer;width:100%}
+.rail-me button:hover{background:rgba(255,255,255,.1)}
+
+main{min-width:0}
+.topbar{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 26px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:sticky;top:0;z-index:20}
+.topbar h1{font-size:19px;font-weight:700}
+.topbar .sc{color:var(--muted);font-size:12.5px;margin-top:2px}
+.tb-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wrap{padding:22px 26px 60px;max-width:1360px}
+.burger{display:none;background:none;border:1px solid var(--line);border-radius:4px;padding:6px 9px;cursor:pointer}
+
+/* ---------- panels ---------- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;box-shadow:var(--shadow)}
+.panel>header{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.panel>header h3{font-size:14.5px;font-weight:700}
+.panel>header p{margin:1px 0 0;font-size:12.5px;color:var(--muted)}
+.pad{padding:16px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.section-h{font-size:12.5px;font-weight:600;color:var(--muted);margin:26px 0 10px}
+.section-h:first-child{margin-top:0}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--blue);border-radius:3px;padding:12px 14px;box-shadow:var(--shadow)}
+.kpi span{display:block;font-size:12px;color:var(--muted)}
+.kpi b{display:block;font-family:var(--display);font-size:24px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:3px}
+.kpi small{color:var(--muted);font-size:11.5px}
+.kpi.k-teal{border-left-color:var(--teal)} .kpi.k-amber{border-left-color:var(--amber)}
+.kpi.k-red{border-left-color:var(--red)} .kpi.k-sky{border-left-color:var(--sky)}
+
+/* tables */
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11.5px;font-weight:600;color:var(--muted);padding:9px 12px;border-bottom:1px solid var(--line);background:var(--panel2);position:sticky;top:0;white-space:nowrap}
+td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--panel2)}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl-scroll{overflow-x:auto;max-width:100%}
+.mono{font-variant-numeric:tabular-nums}
+td b{font-weight:600}
+td small{display:block;color:var(--muted);font-size:12px}
+.clickrow{cursor:pointer}
+
+/* chips */
+.tag{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11.5px;font-weight:600;border:1px solid;white-space:nowrap}
+.t-grey{color:var(--muted);border-color:var(--line);background:var(--panel2)}
+.t-blue{color:var(--blue);border-color:#b7d1ec;background:rgba(30,95,168,.08)}
+.t-teal{color:var(--teal);border-color:rgba(0,168,150,.35);background:rgba(0,168,150,.10)}
+.t-amber{color:var(--amber);border-color:rgba(217,139,11,.35);background:rgba(217,139,11,.10)}
+.t-red{color:var(--red);border-color:rgba(232,17,45,.3);background:rgba(232,17,45,.08)}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+
+/* lifecycle spine (horizontal) */
+.life{display:flex;gap:0;margin:0;padding:0;list-style:none;overflow-x:auto}
+.life li{flex:1;min-width:104px;position:relative;padding:0 6px;text-align:center}
+.life li:before{content:"";position:absolute;top:11px;left:-50%;width:100%;height:2px;background:var(--line)}
+.life li:first-child:before{display:none}
+.life li.done:before,.life li.now:before{background:var(--teal)}
+.life i{position:relative;z-index:1;display:grid;place-items:center;width:24px;height:24px;margin:0 auto 6px;border-radius:50%;background:var(--panel);border:2px solid var(--line);font-style:normal;font-size:11px;font-weight:700;font-family:var(--display);color:var(--muted)}
+.life li.done i{background:var(--teal);border-color:var(--teal);color:#fff}
+.life li.now i{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 0 0 4px rgba(11,63,122,.14)}
+.life li.rej i{background:var(--red);border-color:var(--red);color:#fff}
+.life span{font-size:12px;color:var(--muted);display:block}
+.life li.now span{color:var(--ink);font-weight:600}
+
+/* meta rows */
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px 20px}
+.meta div span{display:block;font-size:11.5px;color:var(--muted)}
+.meta div b{font-weight:600;font-size:13.5px}
+
+/* charts */
+.chart{width:100%;height:auto;display:block;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:10px;font-size:12px;color:var(--muted)}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+.heat{display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:8px}
+.heat div{border-radius:3px;padding:9px 10px;color:#fff;font-size:12px;line-height:1.3}
+.heat b{display:block;font-weight:600;font-size:12.5px}
+
+/* misc */
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:70px}
+.bar i{display:block;height:100%;background:var(--blue)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.empty b{display:block;font-family:var(--display);font-size:15px;color:var(--ink);margin-bottom:4px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .inp{width:auto;min-width:170px}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--navy);color:#fff;padding:12px 16px;border-radius:4px;box-shadow:0 8px 26px rgba(11,34,56,.3);z-index:200;max-width:330px;font-size:13.5px}
+.toast b{display:block;font-family:var(--display)}
+dialog{border:1px solid var(--line);border-radius:5px;padding:0;background:var(--panel);color:var(--ink);max-width:760px;width:calc(100% - 32px);box-shadow:0 20px 60px rgba(8,20,35,.35)}
+dialog::backdrop{background:rgba(8,20,35,.55)}
+dialog header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+dialog header h3{font-size:16px}
+dialog .body{padding:18px;max-height:65vh;overflow:auto}
+dialog footer{padding:13px 18px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px;background:var(--panel2)}
+.x{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1}
+.log{list-style:none;margin:0;padding:0}
+.log li{padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;display:flex;gap:10px}
+.log li:last-child{border:none}
+.log time{color:var(--muted);flex:0 0 118px;font-size:12px;font-variant-numeric:tabular-nums}
+.filechips{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.filechips span{background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:3px 8px;font-size:12px;color:var(--muted)}
+.inline-edit{width:88px;padding:5px 7px;border:1px solid var(--line);border-radius:3px;text-align:right;background:var(--panel);font-variant-numeric:tabular-nums}
+.stack{display:grid;gap:14px}
+.rowsplit{display:grid;grid-template-columns:1.6fr 1fr;gap:14px}
+#printArea{display:none}
+
+@media print{
+  body{background:#fff}
+  #shell,#login,.toast{display:none!important}
+  #printArea{display:block;padding:0}
+  #printArea h1{font-size:20px} #printArea table{font-size:11px}
+  #printArea th{background:#eee!important}
+}
+@media (max-width:1100px){ .g4{grid-template-columns:repeat(2,minmax(0,1fr))} .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} .rowsplit{grid-template-columns:1fr} }
+@media (max-width:860px){
+  #login{grid-template-columns:1fr}
+  .li-left{padding:30px 24px}
+  .spine{display:none}
+  #shell{grid-template-columns:1fr}
+  .rail{position:fixed;left:0;top:0;width:224px;z-index:60;transform:translateX(-100%);transition:transform .18s}
+  .rail.open{transform:none}
+  .burger{display:inline-block}
+  .wrap{padding:16px}
+  .topbar{padding:12px 16px}
+  .g2,.g3{grid-template-columns:1fr}
+}
+.act-strip{display:grid;gap:10px;margin-bottom:16px}
+.act{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:3px;padding:12px 14px;box-shadow:var(--shadow)}
+.act.late{border-left-color:var(--red)}
+.act .who b{font-family:var(--display);font-size:14.5px;display:block}
+.act .who small{color:var(--muted);display:block;margin-top:2px}
+.act .due{font-size:12.5px;color:var(--muted);text-align:right;white-space:nowrap}
+.act .due b{display:block;color:var(--ink);font-weight:600}
+.banner{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:0 3px 3px 0;padding:13px 15px;margin-bottom:16px;box-shadow:var(--shadow)}
+.banner b{font-family:var(--display);display:block;font-size:14.5px;margin-bottom:2px}
+.banner p{margin:0;color:var(--muted);font-size:13px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tabs button{background:none;border:none;border-bottom:2px solid transparent;padding:9px 14px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.tabs button.on{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+.cls{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11.5px;font-weight:600;border:1px solid;white-space:nowrap}
+.cls-scrap{color:var(--red);border-color:rgba(232,17,45,.3);background:rgba(232,17,45,.07)}
+.cls-repair{color:var(--amber);border-color:rgba(217,139,11,.35);background:rgba(217,139,11,.10)}
+.cls-reuse{color:var(--teal);border-color:rgba(0,168,150,.35);background:rgba(0,168,150,.10)}
+.matrix td.hl{font-weight:600}
+.flowbox{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;color:var(--muted)}
+.flowbox span{background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:5px 10px}
+.flowbox i{font-style:normal;color:var(--line)}
+.rcpt{display:flex;gap:7px;align-items:center;padding:2px 0;font-size:12.5px;white-space:nowrap}
+.rcpt b{font-variant-numeric:tabular-nums}
+.rcpt small{color:var(--muted)}
+.lnk{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;line-height:1;padding:0 2px}
+.lnk:hover{color:var(--navy)}
+.bal{font-weight:600}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <div class="li-left">
+    <div>
+      <img class="li-word" id="liWord" alt="ProstarM — Power Redefined">
+      <h1 class="li-h">Buyback material, from provision to disposal.</h1>
+      <p class="li-sub">Provisioned at project closure, received at the branch, verified by HO audit, then classified as scrap, repair or reusable service stock — with every unit accounted for.</p>
+      <ol class="spine">
+        <li><b>1</b><span>Provision created<em>Project team, UID and PO wise</em></span></li>
+        <li><b>2</b><span>Branch action required<em>Material receipt against provision</em></span></li>
+        <li><b>3</b><span>Inventory available<em>Provision plus additional material</em></span></li>
+        <li><b>4</b><span>HO audit<em>Physical verification and variance</em></span></li>
+        <li><b>5</b><span>Classification<em>Scrap · Repair · Reusable</em></span></li>
+      </ol>
+    </div>
+    <p class="li-foot">Prostarm Info Systems Limited · Internal use</p>
+  </div>
+  <div class="li-right">
+    <div class="li-card">
+      <h2>Sign in</h2>
+      <p class="note">Use your Prostarm employee ID.</p>
+      <div class="fg"><label class="f" for="uid">Employee ID</label>
+        <input class="inp" id="uid" list="uids" placeholder="PM1558" autocomplete="username"></div>
+      <datalist id="uids"></datalist>
+      <div class="fg"><label class="f" for="pwd">Password</label>
+        <input class="inp" id="pwd" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="err" id="loginErr"></div>
+      <button class="btn wide" id="loginBtn">Sign in</button>
+      <div class="hint" id="masterState">Loading master data…</div>
+    </div>
+  </div>
+</section>
+
+<div id="shell">
+  <aside class="rail" id="rail">
+    <div class="rail-top">
+      <img src="data:image/png;base64,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" alt="">
+      <div><b>Buyback Portal</b><span>Receipt &amp; inventory</span></div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="rail-me" id="railMe"></div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div style="display:flex;gap:12px;align-items:center">
+        <button class="burger" id="burger" aria-label="Menu">☰</button>
+        <div><h1 id="pgTitle">Dashboard</h1><div class="sc" id="pgScope"></div></div>
+      </div>
+      <div class="tb-actions" id="pgActions"></div>
+    </div>
+    <div class="wrap" id="view"></div>
+  </main>
+</div>
+
+<dialog id="dlg"><header><h3 id="dlgT"></h3><button class="x" onclick="document.getElementById('dlg').close()">×</button></header><div class="body" id="dlgB"></div><footer id="dlgF"></footer></dialog>
+<div id="printArea"></div>
+
+<script>
+/* ============================================================
+   Prostarm — Buyback Inventory Management & Material Receipt Portal
+   Built to the blueprint: UID/PO provision header, category-wise
+   line items, condition-driven classification, scrap & reusable
+   registers, HO audit, executive dashboard.
+   ============================================================ */
+const LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAaQAAABXCAYAAABLPTE2AABw40lEQVR42u2deZxcZZX3v+e5S1Vv2YBIWGXHxIVNQLYk46AgyCJWd2dBkKVRZ3x1ZvR1dGbsrhnndTZ1HBw1DURRBNKlkoSgOCrpOOIKLigBwr4lkEC2XqrqLs95/7i3KtWd7nR1NgL2+Xzq00vdunWf7Sy/swkT9CdIKugI/xYA0bo/24VAr2HWHKVVYgC6V19Ic+bXzD/qRVQFGet+u4UEVWgtGGYeIACs3qDMzCl0bbtq9Sxh5gHCujXCpqmWmQ8q+S4de8wTNEETtDfIpXOlu1e/cfWG5PDPfFDJ5xXYPcygUw30mr0+g9Xx5JQ8+yBzU6ETYRbCg70CvZa82ET4jHS5Cl0IswoCuZo3CpDLWUS05rMKWAC+9uQUbHA1XvYf6A/OBF5MBBZ7aj6ETk0EYn5unAq+ePy3ycPslS7TNyiFnN2l9Zu90mXOq4wD5OfG416jzk4Dc8xOnZVCa7zHxpLrcaoKyWuBp1X42hx2H1/bwDblcZfYigq9OLt1HucSyyt+IHI9yaAKrXYPMq+9O571Dwq9XfFesg5Gpp4eB3KMuPl61KH0+yzSmMz9YFME60KuOyWs695fXJOhMduEWzwMdd4CciYaX0BDy0GohdLAu7n62BX0qLNbNv9wAZsrmO0Y24e/dwD90XH4ehxqDgN7ECpTEGkADEoAth8x61F9FuRxXPkj05ueIT83GrJ+PangnaA9oyC91i3SKk/bRQXnT5CEjju/tuf3IIpSRHQzwlqsPAbhk2yJHh/CWGZ3uqzqise1iJ1qyIvlmhWtNDSeT7HfYmQPW0pqgTLoFuBFcJ+C4HHc8Em+3No/VGN7UMnn7V477D0YWk1cle0r1eWJNbMQ92TUnozhCCwHgk4FsogoqiWgH2QA1X4cKRJrhBCAKGJdEAfVJpBmkGmgByIymWyTYBwIihCGAdlGj9LA1Vx97NfoXOkOYfa7uldzPbWCSOhYcSpwAcjZEJ+IuJPxMmBcsKnir1q9HBGobI2oDGE5xMhDoPei3Imwiu6LBqtrV5eSlDLYjuWNqPwTrjeNKFQE2edPv1rF17/nvy9ZWxe8WjlrHcvfTqZ5IeV+u21CxzgvXpMh7P893Rf/Z7IYu1P5TNfg2uUfw2+YRVis87l2iafFYEtgNiH6ApjHMdGT2BefoPu6cAgP2BnBVJnrGx+9iMaWSyn2WWQXLCXB4jcaygMPc9Wx/7pLlpGI8rUnDySOPoMxDlhN13TXKNJ/cMm0XLmXdn/KHGzyM9Ay07w1XHfXTxG7DLv2nmQh8xVmUKdm3WsAi+g5ZCdfiVUwzl4cT/oztBB7T9Cx/DeI3Elkf8BNF784Pua2ixZRq8S0prDV1546E8NlPPX4OzFmJtlGEAc0hjgCa7cxaxEwJjnDFaYtDNtj6TitTZh9HCU/iwMxiVfJAA4istuZcWenIZ+3FFpjPrhiKpEuQORKjJyM15A8UxQkYwsGY1RTWFFkhANVGbTBMR6O92Yc/83E4QcJy4/Rcec3wL2R7vPXDfnusWja1Awvb76WbEsLYTDiV+9rumgyX1u+AKytD17tqvzyKfzmP0Opk+9bMD4EA2U+8INb+eo71+8hS+kyspNOR5w9Lo9G5GmhDZGD13Dd936OshyiHw9TcMaBFlT52um0TL0S0UTR2hUd2s9Aqb/IF55cxF8dsXmnfLxdvQ4QYfUc9p9xNaX+hK/sDhrs/6JLaWu0N88AiKAqGJPB8d+Ecd+EjT6IHvpHPvD9r1J84SZubi2NfwG1n+KWiGAgAty9Ph4Rg3GPxPGOBN6LDm7gujtvh/L1LHrvo+NibuPVWLoQWiWmc6XLEa/PAR9C9CwyjQmjDkow2Ben1lAqMCT5bDIETQ5X+rP6vxG+CwFRQZFEeNXgyKIWG4OaTQDMmrPrDCfX45BvjaHTcN1bP4A6HyOTOQIbQVRSSv02Yf6aSlOcHQqD2vdUlbCshGULGNzM0bj+PxIUP8R13/s3DvzlF8nnbV17sRgpwksUtzYQRzZ5nn1VFomiCKjF9eo7/5W9e+WdxyDmdPrXh6hu20Njb9QYv8mnXLwYuIHZXQ6r2N28ZzPFrRFhMQacvTSXCSdQFcR4ON4sjDcLja8h1kf5wIrFbGURt164KbF6xutn1gH6NkYU+2NQZ5fWfEDBy2SYzEnAPRQKhp3yuwJEZ1MaiBjYuvv4rWcig4i7116ImzIMg1olLFmC/piwZHGcN+JlvkRm+m+47s53UWiNE+dpvdq2JGOBV2Y8AFFoCQZjgsEY4xyA3/xhpOnXXLv875jd6ZLP2yT4YndZReogoqlpfwmHH/pr/OyteP5ZRCEMbIkJijbdkE46NxX10STWjEhi3YhBcBBxqtcOf4k4iQASk35umAklQlCO0XA1AA/uokU4u9Ol0Bpz1Z1v5LrTevGb/hs4orpnEEmf1dlJkyRRJJL1NESBpdQXIRyI3/B5Xjitl47lx1Nojat+gR0rzO5e34M7tW9rntNG9c1bbxrE4JPDb2xErQG8+r/XuMl+sQtQFeawJ2Bs5xWZyyoPUCUMLMFAcu7EOQav6bNMcn/DNXcuIC8pdKfj2KsVvqa7+pweIkKm0RAHZyXncycCQPJz44SHyVlEoYvg77a5jEReQS1OEmaAJIsZli2l/hjXewPGv4tr7swnDLxTxreArygKYlLNzCGOlFJfhNrJNEz6DMefejdX9BxIXmwqaHddGLVKzI33H8Tix28j23AHfvYEin0xpYHEapC9hl2AqiXTCGrvZ9IfHkNVyJudZzqdnS6r8hFX3XEJvvu/eP7ZlPuixPqQbUrA7l4/Ebe6dm7mbIz3v1z9nXPrFkqvTRJWzU0scNU24nAnXAZqCEuK45zBtctnpmfbvObmSarQtSEKKwrO68k23ELHnV8l1+NDilTsbVIV4ggMsxP4bc74rKNEmVaOeuxIRI4jLIPuXnh+39kQiabqEJYscWBpbPk01yz7agKZFF59GzexPlw0VkpbQ/zGt5Nt/hHX3XnwLh/GzpVuIowefDve/j+jqbmd8qClPGhTC8eM7DtRixKjGqNEqG57QYRqnFyjtdEA9QkjMYpxBLWfpbU1poDZaZdZrschn4+4+o42Mo3fBqYQDMYg7i45dse7dsFAhMj++E1LuXbpn//JCqVcT8KInt/8NhzvzYQlHT8kJoLaGL/Jw5jWfY7/7CkFVcQlCixBMSY76TqmNi6h4z4v8dntdaFkCMuAvIVvPDa9CuHXS7NS4RPoaTQ0NWDjOEVKXoMCqVYwoUJpa0TDlOu46o7PJPCdvko3rwiIR7kvxM/Owup3yfU0pJx8/IvZow75uRE3PnItfvPdGDmc/i1RKtDN9kKICFRxXMHLGrKNDo2THJonu7RMdWmZlrwaJ7k0NDt4WYPjChhB1Q4RVkrNS+Pk/9biZQzNk10GN3+Wa45fmlhvOwnJ5HKJv+aq5W/Dy34DjR3i0O4+z+m4ls4lDmKgEcdfwlVLj6uBkv8E7SR3Pl6Wnfc7iEmCT7SN876XIZ+PXzXoxy7zNBxKW0OyLZfAui+Tl72vaIsIcWjJNOxHSU8ESP1I9dGDvZICo3PSAKjdHqRl9tUVBByCvohs099xzZ3vTBbw1aydikepL6Jh0qlMzvzzTll+nZpaRg//NY0t3cShk2DVkjgVlW2GjZEYzxMaJ7k4nmCjLQSlRyn191Ls+zZ9W26ib9OX6N/8Ofpe/iL9W75BceCHhOVHiOOtqFWyTYaWqYmwamxxaGja9mpscWia7JJtNqg+Rt+mq7j6+E9VrbfEcTtOZqPCzJnKh783CVe+gXH8VAvbiX2qimKTl+5CsqI4REGMm5mGY25KIJcu/iQYaUXPL7TGdPxwMqIXE5bYabhUMERlxc0cx2Ekfowe/pSEu0dpa4TfdA1X3zH/lbG4xeJ6YOwcAA7ISd1nMz83YtF9HsrpiWKx+1Mb3H34HAjWGhwFsf9Fx/ITWfTuIvIqTqwT41AasDjuh+m442t0X/rHuqMJO1e65CXixtUfomny5yj1W6wVxBg0iSfAMSAosbUEjsOWzX2YLYtp9O9Cg9/jRJvGTH5ddJ+HO2kKGh9OuXgYQfEQbHw4cCAiU1GyIBGqm3DdR4FfsWHrj/n4CQNp7kREx53/AHoU3RddOa5oyVzBkM/HXHvnx8m2HE1pS5Q6w+uVQYqQRFiJIxiTRAKqrYS5W1CbBmbIOLaiQzAQkW05kym8n7wsSsLsiV/zLLSS+6Wl8/EbZxAM2l3y3wkWx3OIyguBH1Mo/GlZmaqGOFAc81k+/L0VXH9+314ssZUIERuDMWcAMIe4rhD8zi5JIgSbjwI5nrA8NML2lRVIqkliWF0bMLV4qmG54zN1o3JMpuVYSgMLELkhhYN2JyOIt+WmjGM8qmYn8FNB45hMs0vZ/h/g2vpguh6H1rkRNzzyLjIN11MajLFqwCTf7zqJ/t8/aNk4YOiPHLZu/S4vbPkkS+et2e4ZKiV35syBNffLycD9U0+25LCIhMCG9HXfuEa3usvl2hWdON6ncDNw9bI/cNPFn6tPKKlQkJgPfGc6sX6IYFCT5Ki6t6TFcQ1eg0tUhjgcROONKDFCI8g0vIyD4xnCIth4fKHBKoYoUND/S8fyb9J6URF47VtJMx9MzobogjRQRneRIRqiEoheSMe39qe79aVXvHpDAkszbh6w0zwtiMm0HEa5rx2kmzkrXWAvpd+oISiB2pP42pMHIvJCmgoyBs0xkLe45kwamt00jWRfEEgKxhO8Brc+FESTRN6oBGp3Ij9AwMaKaAe5nsWpb2L3ZXr7jU7inhhPaoBNMv1tHI97UyYRhWD1Iq644+PcfOnmHR7ITjW0SszNjx+G5RuoNdjIghFck8ztS1th3UbLQGiIohJh+Dd8/dIvVy2rWRs0qUOXKEiSFwvYzjymK51hBUNnpwhpKlKhYHjwAGEOsGGOQgEezCXP2IUOYUwf6mkmbPgzjPtJPP90ygMWG1k8/1+4btkvWHTxvWMKpdm9SV6KdS8h0zyNcn/9G16t4jcawtJGSlu/jnIXjnmEUjxAlLE0RT44kwnKJ2JK7wC5DL9xWhIEUidklMBNFr/xSMLyecB3kzEN8ZUlEGHyc+cgrZ1SDsfJzKt5SGP4+Sq5R9csOwLMnxGWSPf7rgAfgo1j/Ob9CbgAuDkpBfUKWZsikGl2x8VS0vggovLO8bTEalfUmQd00zsn3muqjYgQR5ZMUzNB/2nAsmqy646omlMoZ6eBu3tEgRifQFIsbsYQBw9Q2vplBBfdwYNZXAyvA07AOGfgN00h6E99C3WvgENUUox7IpO9N4H8bvxJszug0sBnMTyB4qfMZHQyOMD+ICeAnIHfNJ1gkISf1y2UDHFo8TLTMeVTgf/Z4YGcVUiicaI1N9A0eT/6tsS4joMR2NQPz74Em/qSwALYgNFWvn5p77ayRUnpnh5wcmClZiPlweYBPfrojDz2WJl8HiUviVRKnkfzODLcib3uPo9rlr0Xx309Gr2RSE7DyxwFklRKEHGwMXieITI3sPAHb+WodxR3KHinpwUqlQtBte7pVLV4DYYo+BkSLaD70qdGufIl4HHg21x5xz9B8Z/ws1ck+Ux1CyWLOAL2PcB3K/oWAgQDgtCElzFpgMk45YolCaceJxlPMM5OsDMBjQ06MPrYe1Ot2JHL8JsaKffFuy24RBVUFgA3V62wvWsVJYE+cbyZ4tY8IkWsGGQMtETxMRwEchJGzsRvbByXYlOxUqKygD2Fq5YehMjaPZI0P7pQsni+ocTZwLKxE9g1SbxfdJ8HemYC1+2ZdBJ3nHtYMR7E5TXccNGicX22Y/lhRMWPYry/wsaaKGd1n1qLl3XQ6Bzgd7sFSa0IRd8u5ssXPzbuO1yx4kBM6TqM+TtU3MSKq3M8gsX1DVHpBOB/WP/gyJ+r5ho9ciVNk9/BwNYIz3UJI3h6Pby4CWJryWQNqhsIyu9k8SW/ra0hpwm7lIpQeX7GjMaD1q0rCuhLBx99iC/8x2CZt/QdevSTodpPyHNP/EFBOPzwjDz9dEkg1m2FhJRONawuWKY0nEjT/h+n3A82JKl2oFStGhFDWIrJTnoDdvMnyMunU4siHhWu61jeiDKLOEorQdTB1RxXiMOXCLfkWDx/bRJ0QLyttUS62l1dwupZwvoHha9f+ixwJdcs7yPb9JdJSHkdWq6KIQ4F5TSuWJnl5rmlxKcJrG7q4+j+C4iLPnE0np3oIKaEtWfiZT5HFNTH3CqCOCxej0a3YLUh9Z+N4+hHgPdEop2I3W6XrpqbRBQ+r/N2LvdoB0pZVAKRc/iL7x5L/j1r9ipDTjFIxAjEfdx48X/u1C2u+e6xiHwSL3MlUUlHqLc1uomkseL6zUjwRmAtq2ftPhtJTFpuc9Q9J0QBGHM2ALmxLGUS/5E7bSZGX08YVGrajW4BVpSOvQLZYXw6V7qs3mBYf8COB1PRfLsvegb4azqWPYyTWZSE8lLnAla1+lMBWL8bS8yHMjUZywGGmRt2PJbemvHcfOELQJ6OZasx/q2ImvqFrCT9e4QjkzmaNUqZHiyLHp+Msf9EuaS4jmHLADy6FgZK4BrF9wEGCAcuZfF7hwsjI8lD6cZDjz2rSfj01ihcKvDl52fMaFShp8V13rY1tkwy5viXLW/se92Rp8iLT6zfYN13lg479m+2RvbfZO1jK6r3y4tNLZ3/S8fyKXhN1xKXQ8R42y2lYAgGLcb9az644ut85YInq0Ujh2z41GFq9XWImY6NSINXxprHGK/BpdR3N4vnr6XjPo/uU4Jt7+drd9i2Oa5Yj790P8Zhg+fheEcngmAMrU9UUivmELxNhwFrqod11dyIVfxqp/fhNXf6CRSi9fI0TeoPsppF7/7VbufXlWCG5086Dcc/gbCk9UGoWg9aIFgbk23JUOxrBT5T9VHsfVPJMH/FVI5p6mNdizCjT+viATNzSl7WAO/n2mXP4Tf9fRrwIXWy0Rg36xKVDgHYPW0zVDGuYMOfg7wVMe7IQkENYQDITG584nBEnh7xXG4bdFJXT6O30TDZZXBrVI3sHf79ri9E4VpgM64/k7Cs4/G173xQQ35uRGenoVDnJupUw7puh+6Lu+lYdhZ+y+WUB+I6IzUEjcFyBACr5sa7zY8kxMlYdrQgI06B0Frw6L64wDXL3kG25RqC/nHgyQoq+436doHEd3TTmg/SOOUQSltj1m9xeGxtEjHmOQmE6vgOpf4Pc9N776VjkUd+blgrjNZMO3rS6xr1XxTb4Tuuo5G5G6DRazzeQ962MY4iRczLNo6mGnPoZpfZQMFa62Zc9+xGV87eetjRSzYOBn8lLz2zTsERSEogbfz+hykNvhG/6W2EgyPAOSLYyJJtaaLU/3GQD7K6ZwSm35UID6UFR5oT7a7eg61g5LkkfPb++qa+0JpUHbh7bpmO5d/F8T9GHEaoumPCXNgYN+MT6AHAGlYXZMger/27XkgaYoxt2sn925CGDjvsTH7QWNC3MfPws4ZyWF/NMnFkh9p57d6IQxBto3Plv6R9mfZk/6zRKRtFiRI3zuCKynrfcPE/cO3yd+A1nEpUGh8PwEyrCrpdx30ULyOUo3tQDsP1Dh5RIFTykRpbmhnsfyvwdDXpdUS3QaqEG+ZW6xeOdDw1RbKi4FcJuJmZSRhYxuFj23th30kekdDZaVgn/0lUnld32KAiWAvCfvxVTwNfaK34I3jFSETJ9SSQxlrna8TBNYw3r2vU8aeY7Y0PtaD6F9iysm6j8PgLyZAdB1Rj/CaHUt+t3HRJpdVDWPEXCcRPH3bMkVMthWbHOWljHIWRjTFpMIKG2oiHauIUEcAkNYu1ofIURbVxSa2dYtw2afBPXXfIEe3y3JO/Sj7TqVyfL3PVinlE5fsx3jTiaHu4KbGSFFjIlXf8P75+6bOjwjOeOmBA4zrNBE2Yn9qTUiEjdSsWqzckNcX0zidwfIMT+HV2UjD4jRAWp4+4x8dviSRCoWP5TloHYtN8FnZj87sk9+iqpS2oXkpUZuwSVJqUdrTx1xEuQ0zLDgWTYIhKipt5I+u2nAH8ZLf6hvcWT6s0OFVzC8Y9NUk9GFepOmc38qTEl1waeByR3+FnEoE04lkSTav6zwG+Pab/6Bu/ayLkrUQBOwTTjQPIj0HP3hn+vHeT0gqtlnzeUn55NXHwJI6fVAOoSyhZEJqwXmaf2ZCVXkfiPEkcDCS8fTwldxgYWfPqTTZpOX4vk6cewrMvWh5/wWDSnj7WKsYxhMWXsPrxBN6bYyuWUSvELx569FFTVO/JOnLSRhuFIpWGQIkGqiNgQ6l6qNvwKQHE2WSjyBFzRItx737h4KNPF4h78nkh1+Ow+MKnicMPYFxhxMboItjYkm1uxjeXJ8KgS7a3kIBIAmw8jihKSRKDTeZcrl1+Hfm5UTWBOtfj7DB5tdKjJg7uZmBzG2H4HsrBZWO+wvA9FLe04ji/2naf1xjlUitW5Fz8xkOJgjECP1QRB2zcj2gn2EdxfcY820qcXGcWvGrnqtIt1pGHE7/YeCLuBIiT9hRzdoeFVMmUcPpQVuJ4iZAa+auFKALVM5JkduyI56WS/Bo0vwHXOzwpGzWScqKKiKHcb3GlFxJ1d7y0txNjNdVgS3TcuRbjHFNfXkN1olz6w30ns7urS8nnIQ4sjgnHpxEIoOtGfm+OhU5Dg385m/qVx9YmAFyFTYtY3AaHUv8XWHzJWvoSzVJTprFx6pGTgaUNxhy+xcaRg3gWDVwRV6AugS4qXlbE6Vcig7gDauMmkakNhjvWHXbYGTOeeeapzkKr5BPL7Ntcu/wbZJvfR3lgJMgigWestNO58t/Iyyhe/2gL6m3Bcadio/qMJFFBI3D8r9Jx15sR8+8sOv+pGuaadM6dybAW8+nPxe99Gnh6F9TS115H0JlpeL+ROnOPxOJmHMLBX9F90TNcs2wVxj0JYQxBlqZAwEV8cMXf8pULN71qO8pqGCE+9TcnkMQNIc6Lux+9sQ5W7yEo7cjoEMISGGcmRxx8OMjj29pj1PK41H/kcBaZBsNgNBp0q3gZQ7n4NJOOfYi+RxvR8etqe79SQ4KxC1Aef8cAiWj29h2NtKurIiJaUJ1ENUVqTE0m1Tv0YWBokEZnZwI5ffmRI4nsWTz4mGDV4FYCtlUxrkPQv55MuCgpt9OlNWLOrm+S/zzAmDe+bOMwEUbEk4zjb43jP4SY71fN+9HMfsD1419sjvnJFOOcs8Xa2IAzoDaaYpwDy7F/Uw+cmwNdvfrLWujsNLyY+TjB4Dsx7vTtoLskwVlx3Fms23ICcN8QaC3/j8nEmZdeRGc8j3GnEsd1dl2VFLYLFL/5QwQDC+m467sQf5eGlv/li3M3D9P+HdYfIEzfoBRak2ryvXNMNVilHlp/gLBqTvyaFEaV/ffh7x1CKX5HXblHmirNKssTGHT594nKf5VEELJj2C4OLZnGAwlL5wG3vaI5STslvA9Ii6Qu3z+JQI7qceInxWmDogV5YpsSuhvIWkCbmHTMA/St2YiXmUYUjqAYpMhFQ0uGYv/bgMerwQsjWYBqzxlTKfEyhrD0E1olZvGjOyVb9r5ASnIOFLS5fpMuDdFULVJ0gn1mM/bOMdClyPKTksTMehqDaVK0MxiMifltshfnWFZVpVwSbZSRd7K+5LF1IMZ3nareoiSRZcW+Hv77PS+nlbHjNNggfumwY/68Ea7cZG0kiBdDPNkYpz+Of7TFiXJHPPv05sTmjO3IypNVgGlPPfV0z8yZ5567NbhxsmMu32Lj2CDuFhtH0xxn7p8dcsQV8tyTi7VQcCTXIxTeuZ5rlv8T2cYvpcVQt8dc/QaHUnwucB+9tZtfE5iouzXk2uW/xLizkHL9+UGVcNtgIEbMJLyGK7HRlRT7X6Tjzp+C/ATsT4GHqx08qwdulkngkr3Zan4fpkruUTl6D9nmZkpjJSirYoxDOFjC2rtAlPIPfoYpP4Xrv54o3HEYu0gSLq12AXDbK5KTtOsmiaLL3orjQsjY+1ZRXFeIgnWIJL3D8rsrmEMB46XpIj/Dy15IGIzs1xKTVDeBc4BbtstHSoIXYr70x2aUU5MKDzpyA0y1JinPJT+ufnYnaC/DXyrku5SOnskor8eG9RXoE1IHnGym+/5SDRN65SjX4ySMTBTk2nFMgcXxFWsf4fHJf0g2Y42mPauQ/P5y39m8uBkcZ2jqseCkJeR7hmG+2gmG2P69I0LaCcw2iTiD1v7uxaL7niOefnqzcrJXz2P+kZl+2+rVwdTnHrtii7V3t4jjWLAgpqyqiPNJPeSQBgHbWXhQ6ew0bCktptz/CG7G2T7JOK0ph55VFcIjanj67bRp3M4ssIPGSjAQE5Ytxn0dftNl+I1fBHM/mN/Tcee36VjxYTpWnMaHv5eh0JpEWVZagozle3qt06q5SW0zq/OxcT0R3BY3C9b+ipsuepyORR63vHMA+CFuRhkTt1GTWGHyZ7z/20e+qvokzU5TLK66sQVx2tNxmDr4mcXJKEgv3RcNpg3vdp8gTpongsg9Oz5FWoFMz6jmPA7d+8nvGfctuN7BRKMItgS1MRT7Snje/+4QgdmnLKSObpfu60JYPhe/4aC0UnU9m6+Sc/EC5C05dSjIbjLrbcqEEDrr3BN50Wo00LXLP4bX8OeExTrDG1VxfUMc3M6quRGdnS75fFTdAK2tMarCX/3wLSRNUWvnx+L4hqj8NC3l+0CUgtqqdXTIMae6ouf0WauAMQiRUuo3XPWGlx/pU3AK3F/XRpnF6timoeOKc/WAxg/4ItNCVYqqtsWYo1/W7AXAt7vIm/zqHii0Fum484s43peJg2HaVupHEmax8AdN5GVgiL+g0JaM+7ruHxPO+C1ew4njC6GtgSJIoaI4VGxUCSd2cPyjcdyjEXMZ5QEox09y3fd+iupKiH9M/qJnhigcM//ErKZKlNs1S0/GzZxSd9+jZIveCaJkvpfuV1lBHF47ttKb9knKNDeg9r3Av+31nCS3yVSrbs+sB7bpgnzesirJ98M98Et42UPrLjyralKl61uJlV7YvQqQpI0xNeyl2G93YOFKWnXhOLasORZ4KE1IT+aglwTFMOZMsk0wsDkeUWaoWDJZh9Lg77j88Kd5H0lppL0qkBItxtDZOfa1q2cJMw8Q8nNDPtTTTOT8E3a8DywQ20cSDL9rNy6g6d+pUNPrls5E3Y/ieNcSlet2HuF4QnlgM1F8U1XIDDG3BRZ+v4WmaBrGY0h4u2pa4SH4NV9oLSYMRGKYLbAKsJe2GFc22SgCYZIx7iYbfeuQpx//7Upmu8KqqGccDD6tcefKs4+sXX/Ikf85ybj/tFk1TirLoliboxIyWok288IegoF/xDj7D8HThaRbJXIITX0HAY9uqyCcjr21YChcF3L1sk+Bfj+dkJ1oY1HldTJkj0eBJQ40Dc11cbwjcPwjQC8nGBig4857EaeHKFzBTRe/uI1JpxF5r3WqVgwx7XgNTtLtVNwd7mfEEBYDIvs9AF7oT5h00PwT6FuP400fMR1gODSUVIJoJ9fzuTQnaa/BNsz4aR/d4xSAHYs87EGn45hP4WbOG4dyHeM3OISDv+agST+sVinZrSOKk726ZcvDTN7vYbKNM1N/1Qh+JBvTNMllcOvbgIeGQOm9XemcyGxsDCoje3UFxfEAVlUtIzF7UyCJTTXH8S3i1cuOJnJvwPPfOI4FTDQKLJg0E36kygbjlm4VAcB/cu3yjUnv+rqcWo3AYajMwm/0KPdr/eNI/T+lLZ9l8SVrE/9PjTCsMOim6CCUqWmo+1DlXwFMAvVVs7tXpfeQc0LVipVgBtWqb80NClJg1c7OmVWQTTHf2Cr2b11oipC4pCogpz4/Y0ajrFs3qIhIEqjwMtcuvxs3u5C4v9ZqTOSb8R3i+HDg0e3KpVT6w9x08d1cs+yLNE75CKWtIeDtloNaYYqJjFSiUIkDCyKI04SbeQci7wB9kY47lxCHX+Wm9zw0xHp47ZKwKh+z8BtNiFyW5JuMta/F4mYdwsHfsfjih/hamr+U7IPNXHvnStxMKzbSMRSHJCfJcU+gJXsq8PNxJ6qPf7RJGwbYj3Un9dCxPKyTFwliJqF6JI45DjdD/S05VBGjSXKp8ynyc6PRy2ntio6dCoO/OaPITWv+F9efSTBmzcbZwGI2VIIYVBCxfPmBqWh8CkF5B/lHFejP/miXjdXxS18FbCMfWnEg8aCDOqNvGvENYdyMcWZi7DtB5uH5k8YnjEhyboJiP8gvE0a8Gx2fXsM7GU+dQAU0hjggcaLXW2xSQ7ItHqW+HyMvfGGb5j3MkgQwcgBqMommI0MxXY1Bo8eT6zdU6rTo40ceOVlCjg5SgyMrIkVrHy9K+YHJyarZ4Xa2Dsv10bR8xAhWkkxb98QzLx1y1G8aHefsfhsTKojIoZ5kDwHWdIGkUTqKcA/owu3xZrE4joOVAxONfIRyKYVcUgWit/djHLvlYBomv5fSliiJ2Nqt7ZIlOWDp4musKewKxnkdftP/IShew3V3dTNQ+iy3XLb+NS2UklJBluzkuXjZIwhLY5/RpEAphM5yRJTZnS6r8lE1klbjO0Hb6lyORFmL+uYDP9/tMNaIer0FYxpwGy4blw2umvCAKEj2TP1tGCIyLR7FzZ/nhot/lLSV2cP7SfkhNr5u1OoKgiS16TidzpVZWueWAEk7ycb43glkGqcntSpHjoLC9Q1B6QVs+JtdlqXjvN4hSh2QoV2NNvwR/NWjvpSHcJ2H8TPfJTPpOsQZnzBKJsziZhTl53Rf9MxuL8IYlmKCwfpf4WBMWLIpRlqfz0g12YhB8Q84/ny6rwspPKijwkBWJuF4bFdJXTWtgee+ONzay5S8AxVa4qQ5qmZEEJHHDnvuuWJaRkgBculPq15Z0pLPqRVkk6bETnn44/QyuzLOh3wE0SSexkUcEXNwiqpXknMVkQcJi4w4P+IAMhkYJRlQknyhVXNiZN18iltvItPs4jiS9q3ZQ9BZ6nsChzhSSv0RaCN+40dpyt7Ptcsvq2lf/loNelCMLCDpiWjHvFaMQ3nAEkcJXDcnhXgqkbQmcw/lga2YpLTIWN9MVAbRS1nwvUmJ4N8LwSWqEA6OkwcU47QkjtTFA5IE4YiGKR6lLd9mc/n/kutxaG3d834yV39BcWArjuuM3PdNhLCsGOcoDjvouASpUYFc5byejZ9h1J5xqoqXAZFfce0bN7Jypbs3BVIF0vdw3KmIM2XHL9OSMP2ypdwXobGOv2y5VnwBiwGY1bW7N6kz7pdInT2QFIwrZCe5BMWVhJvP46vvXJ8wtRGEasVisOqP3LO+8pXh4PCPNnm2AdTT2iuVLYlAGbLOqiBx3LemZO0D+zmua8BMNcbfbOOXrBPcW9V8Upozu/rZTTVPoo6A40hNDbauFCW3G7A2qkJjtZs3KRaRHUM4pAV5r4u44d3XUOz/IMhGsi1uotlqvFOlhOuXTYKIi1ql1BdhzCF42W9z7Z1daRTYzkYB7qtyKIHarlhxIHB+onSOwWg1LaSp9gH6ggeSCNpKXlkaKdd9/jpE78XJJNbxWHBqFFj8xoNpjM5NQKTevdXeeyd4QL28UxU3Y/AbXYpbb+CRlnkUWm2KjuxZv+Si+zyuPO55hN/iZUeLfEuq5TQ0ORh5W6qCGh6sPts5xPGOzkoaAa0JXLdmzi6di50Mr1SwkaJjvVLnmmCSQlfjhlxi3Kyh3P8QWeeOtK7SqyXqKcGLkQ0EA3n02XeyeP4YfU96h2LAo2PE282jRpGVYRaVCH5qiNQmziogM158ccCqvrc/tnd7yLNFqz+LIr1k+jPPrNMab9UwcZiR7dBLu/1YnFECViof3hHMO0QoaRI8c+NFXyXsP41g4GsYJyDb4mDcinW3B4VTKpii0BKWLQ0tnVyz7N/J5221vM5rgSqlqjx7CX7zZGwcjwmPJq3IQeQuCq3x9sJjTmpJmjvrPvYiijiK6MLkFnNe5RGOmhSbtfFjhMX3031hRxKZp+yVIBl/PyeViT/GdUe3ciqKr00xi4NaEuXipjUHgJyQhoabEa1LxKHYHxHaJNx7be8ujcvs0mGt67XLTF3A/C3Xv6tMrmB4JaoBj58sjgsiD2DD81h0QRfd14VpEuvoh6warKGlJKpluBaeBpzZeNL2e8NsUiiZ9CNRgtzN0G29kKRGLlgFmf78E4+2PPvo+ZEWT2h+9tEzX7fuiXtHFEarVlWibQ6OUNIidyZWRcV5qebh0svcZgRnezmRVlUQW6xzj2nK/B1uan2MRRdehfBWgtJXUN2A3+zgNThJDUEiIB6zyeLObXWDqFDqi2iY9DGuWfoX1QCM1wJ1zUlUYKPzExlfp1URFhXkzmTvDq900ZtaAOH/UO4vJ36WsRQHNYRFATmXK+84NCle2vnqFPyqSeSZ6gqizWex6MKvk+txkoTRvRSxuTVMDQKnl9LAjoo5V/KRTqXnmQauOyVMT/SJZLL7JVGSI/ByweL5icA95tg/porILp2/fXixNSQ7yaU8sIgb3r38VeZQNsSREMezEOcOrrvrsyz8RlOND2IsebYFG2oKC+hQDVIAb0atcAGYdszj6wTWuwKCSCk5+zNfPuSYg1J1bHiwgioYBZny3HMbKwCjbB/oIAJWjz46Y9FTyqqp8wAitD/yoqerYF0lKCO0MzBepdCs1BzSNLIpTqC/3t76ZrMyb7keh6+86wEWnf8houhNhIMfIAp+BDqA3+TiNzq4nkm/N7GedHdZTyKoOoSlGDfzb1y3dGY1AONVbR2pQUTpuOtNiHd6XblHisXNCnH4MDNe/9sU8hvKiPJ5i6rQ/Z7HgV/h1gHbVXOSWprwzWU1ltarj5JW4YrI23Gn/ohrln+AQmucWCN7KfE6uzWZb7fvN0TRc7gZGTlRWQxBAI5zBFsHZtUwidnJuo2m5InFz4CRVcyViB51dp1x7ouahWpEdrJHqe/7NHgfSfoutdpX4aZ0EXMYmea/pWm/H3HV0oN2mIleiR50zIuoFrc1bKuZG+OAaOJ8TMO+NdkSkSD3Z5INrxEaT3KcFsGen97EjICg2VRqSK1wG75HFOTlMuc0GnNESdUKaEYMCg++7sknNyhIF2g1DF3kKLwRNrKISYqmOs8PtQjroHzeDhFMN138IosuXMSid52LE59A0H8tweB3iKOnMJ7gNzn4jQ6OK9XAElW7S/CepD183Ewj6nS+JnKTKtFsGrfjN3jUk8pRheuc75F/YzAqcjEnhfHE3JW0JainjrIm+Woq8xJ4e86rOapRQBtwzBtpmPQVOlbcQudKN61JueeF0rEnKz3q8L4TBhB+ir8jpUBjss1JEENlHeAsbLSDMkBqiCKw3APAg71S9SO/+gVSyjSMSYIAyv0FNg1exvXvKqetqHUPfm99r51hZnGolLaE+I2n4znLWPiDppoFH8Z00yKprnkeeBljho5apNL87C01sAgw2yTc396dWEOJfR2qqhX5yH2c7BVqBM9Ip2a0x+9ltgioVf2YVw1SUPUFDPwwFWKOgFYLMRo5Ib2rDoVfBWxUwomfHiKAx0MVwaQqzF7pggpfvvgxui+6ke53v5doypvR4CzKg39POHgXcbQexxeyLS5eg0lrIu48tCdiCAcU5BKuuevYVzWsVLFsOldmQXPEQb01yAxRAFa+l6wBTrXlR+1r+oZEeTDR/4ycmDnK/EYlxXgn8+yJJ4HonrdCx3P+x8kDVCtBXSENkxawtu+GpJdaYc/vmd7eVEgAsV2ZOH13sL7J0JIiql/93UEIJyblkBi53YRxDOXBfhx77+6A6+CVKK5ay6CSLBqbOv8cMo0uweAApYF/5IYL/q16aPakJipu3fEySTZPrAgWxdSVF5Nc41HuC8lOPoV48/8jn/8Iq2eN0OEzNeevlzIdyx/GeIci0dDk0qgMyilcffc08udtTOcnBvBj984tEr/siZkWqjKoaqcY80Y9ZMsnT3mOf0zq2N0f1r9AJ3vCqvDFg468YpIx79hqrSUpSaR91gYqclsFY6TS1G12p4u1ZxMHDGFAlaisMHgC95n12wRwfmetFSXxGyWBD5WK3YvP6gPuTV/wwRVTiaKTictzwLwdkRPJtmSIAoiDGFUzzvymRKBlmn2CgYuA/3jl2m/vIiWVtS3r+s7BazgmbVM+Vu6RxcsawuJqbrz4nrHUsfTnb7l22S/xGt9WXzkojfGzLjaaB9y3x3OSjFv//dWCVZuU19H6om2TORWKW0IyzVfSseLHdF94y95xQ6RCQuwqSgMBxvgpjL19F9mksvvb6Ow0eI0nkGlqoTwwcpqOSloseeA3XHns2moi7S4qZzvfwpzxRrvpNn1Z0pwPxwU344BAWNpEWOwhLn+eG9+zZptJu4dhEY02YwnrYkqqDbh+E46f5GMlzr56K1K7lPtjHPdDdNxxI92X/mHEbPTOXoc8EXAfxvnzYR0oDXFk8Rr2IyjNBl1KrmCkQFLte92al14+5OjuZmM+uVHj2IDTb23caOTTLx929EPyzP0FTZiByg6gmbSvkhHuD1+cceRZWcf8dzmxKETBTjLG2RTbpQc8+9jqSqv0aqLvUctOwPWOSwox1mx6EYvxDFp+gOs/Ut5W9qjCHHucbZUnxmMxpYVRqwJBhVzBsP4AYU6vJX/hJuBH6evv+cCdb6Q8eBEaL8RvfANxCHE4vtw4JCnzr/bsRCD1vpqjwRR0IcYFIa6LJ6gCZpBrlv8Fgr9jP50ajCknSpOFepqKqCQ5SdjLWPiNT3NL68AeU0xVLXG8aeTmkiNe34KXzWDcJPsiEU6mrk2jOEnpKvsZrlq6jMWX9O9xhTsviiIUjn+MvkdXk208gdLgSC0yDFGgeNnXcXDrGxA5GT8L5cGRE2KF1H3AShCla6VbVRD3rkBKc2vcrDPuMmOVwLs4grAIcbweLf0S+B9iWcqN73quypx2d32n7QZBkhcqtpWYB9CsQzbYMWMZiLJQPIgougDhGryG6Wmmdp0bMlb8Fpcg+gvgAyNqfhXYy8ariINPbqdNiiQbwdgFIHfUFIO0CtIXm89vkeh9WTEHlVVtnG4mR7lt86HHTJNnH12UToCMAtlWhJXddPgx73GsLkakqayJre+B9FtbxEafTkoS1W4AUdxlbXgNDuX+4Y280ioUunLE2dltmqJotRTLqhoBldRSjPnqu/8I/JErVn4eM9COOP+Elz2EsJhGdNa1eyRtIHjckPybVx1cJzHv7zkA5IK6co8q2n5cBsc9BTd7Sn1IukBUTl5SVzXsSk7S4aBvB+6ks6uiqO0uDmBxPUMcvkhszyHj9BM5ghuPPqCoLIg0EhWPQc17Ea7A9Vyicn17J+n/FJNpPpzyQA5YTK7g7OH+T0ohreR90yOrcLwT0nykEdZBYjKNLmH5XOAMonBHCoQhKIHYxEoe3rpirwgkTYuDxtGz2P57knIudWCqamLElrH0YWQ98DzKo0jDGhadu2WolvygDqnvtsfPpfsCN10wnq6NTwE/46oV3WjpW/gNZ46j+kRiWalcQscPP0H3uVu205Aq5YQaMj+nWF6H680YVpzSEA4q4l6Q+DB4lE41khfbA07rujUvbTj0qL9ogKUhxBacWBUDTqPw1ZcPOfp8V+Wz8vyjv9weMkzo5UOPmuXAXzvKVVaEUNUaMKDhJON6L0XhJ6evfeoRBacVkkCDrpzlmp5pqFmYmv5OjaxKoKBgsAhe0i+l4j9KTH2lY9lCxJ+FRgE6hsYpKX5t7SDllz7Pze8vja5p1gioCry3epZw89wS8HWu+vZK3IYVeNk3EpbrrUlW8eVN4Yqlk7mZza+6TqcVS9z1343fNI1gME7LaNRpIUZKMDAOQVwnvFWreImjYBYAy6HL7jS8OxasGG18jpveXxrHZx4H7ubaOxZjze24mUPT1gx1KjRWQRcAX0sqtuwlsvJj4ugjo1sR6lAaAPgLkCkExZFDxdVqAtuWn6dffgeQtEDf2wJJxOL4Dhr9ikUXXbl7DkaK/8/ptXtVEFUXSX1UhQKG3BiT2tWVRJGsu9+h+5SnubrnIiLzS1z/qDEbkVVMxDhUvMzrCItnAN/fvkOmKLkeh+vftZWO5d/HzVyFDWsdwokPw2/KEm/+BMjVrE6SNFshVnKOPFtY9uLBR+UPcJ3OzTaOLOJY0H5VneSYi/usvfilQ476X0V+otgHXeNsVbRRrByn2LNFmd3kOJktaUV2SSLtov0c19sYRzdNf/6JL1ZaXlSFpEjE1cs/SKbpQIKB4czN4mYNweDPueHCx4ckB1e77sr7aJ52LuX+OnzfmuRZB/2QnXIr8NTQyuE7gjCqvh4h1+Ox+L1P03HHfKz8CmMyCbOoswqH4kKYrbW5Xz1UgRnNgp0LPJT6yuYMM5DHJcDCkgDn0fH9GeRl3W4vG1ZRiCa9zke1TBdC1xh7qKtLWD1LmHqkofuUn3Htdy6DxlUYkx3RNzPSuKKyIJzGNd87mBvf9dweGVctVfhaOPhLSmzC9aYShSMIUBHiAFzvaKxNkKyR19LiZRyi4Od85Jitu7MQ7s75kFS8Kua/esP4dnPVTzDHkkeTgeRrOqbuZTJWEVE6VWkdU8OtOOEtHfd5dJ+ykWuWfhLXL0CgdR66GMd3CMpnA9/fod9Eo28QB1ehYobeWg3BgMXLXk7H0q/Qfcl9FQepUEj8Sc8/3rX+kKOyUx3nE/1WidFYwNlqbSzgNBvnbEc4WzApLxXUAYvDoLVsSa9TiBXMfsZxN0fhN6Y998S1qY8p2YDJZoy58o5DcZy/ISpufyitCiKCY76erv22IIBtFb+fotwfEQxGqLp18EPFOALu64Gnt6scXheU0RqQ63HovvQPXLvsF/hNc+rr+ksF8VVMKpRfTcKowgCvXvEGjJyZ5h7tY5GCImgck2meRLn/UuDL1W62u5sGAk3zg4Y2yxwd7k/Occcij+7Lfs21y75EdtLHKffVYWWKYK3FyzYRlN8KPLcTe3e8U5kES31I1rP40V/jZd+RtjV3RoZXw4rfWnasj0hSLmhOryHPKyiQUK3mhBT+RNs+d58SoSp09S5l3daH8bLH1wX5iAg2FoyekGjsI+RZVOZ2dfRTJpd/SabxVMLa6KQkEhtxPTT8CrmeMxP4LYGNJBUi8tzjf7vh0KOfziD/0WRM41ZrrSRRErZfraaOJNWk0UltWLgkUhfbYowTqtpNcZyf9twT+fQa3RYq3muACN/8F352KuVhFdA1zeYu9T+D1aXJmGv63WwTyC9gHDeNvKzHsR7hNbqUtp4D9FaLQY6XZqbdbtfJhvqrvqeR9aoB9oC+nbMAXknjKGXsjm3Fa8kQbOfv23coqRwxH9WvpEEX+w7NWJukH3zorq9SHvhLxGTrs7DV4ngGKZ8E3LFTwTzjpZU4zCUGvQfjvGP7OpnDeNSOBLIxDsW+kDj+SbqfdpsMeO3U43oFjgpdvQ75uRFqvpcUkKxDS9C0D4uVY5PSMzKymb96VhJGbfi3UTa4Q1SMybacwpTsv9bUE6smufaAc8Czj32laDlj0NrvZUXMJOO4fiI004oGmtTvTpMUAPFEzCRjnBYxpmj151Fs3z7tucfyNQm0yWbuWOSRnxvRseyj+M2XEAyO0I5DFTcjGP6LxZf00dMzcoak8ihxxDhCsNNILC4n90efmexMBrxUYTzVY3acBDgcMjSAbkh9UfDqKGmV6BKr5sZ03OehtGKDtN/YPkmGsKQY5zQ+8N03752cpHFQPm8R4CsXPoHGv04qIYita9clVfmPraJFe5o2FNIK7M5KSv27Zox4GbD2ISb/fk0yD7tv708IpF2h1ZXIEvOzJO+GOh3iMQjTmJTZP4VQZFQraVN5GeXBn+E1jJS35FAeiPEbP8q1yz/EqrkRHYuqGy3xKeG87vlHfz/l2ccuKGn0jgEb3xKovpgRkanGcScbx51sjDvZOO5U47oNIiZW+3LR2jsCG1869dlHz5r6/OO9qc9Ihwij7utCrlp6EU7mPwjLceK4HrJ3k14p5f4nibQ7KY47rAdUxZeh+puaNvBjb3ARQxzEZJqOZvLjf5ckqPY69deX08SHlM9brrrj7TiZNxOVbX25Zdgk5NUkHYxfTTXtqlUVnjsL159JWN6JCvx7D7dL/KWNLuolfZWSjqb7EPyZKoEq92I86ipVpaQVS+TQhKFLnR2nd4Eq5+5l7w/Y6Ak8n5HLCI25JDZpN2FW0doaJ+WCdl8wj8sE7TzNTCsrWF2dhH7WFdJa2QeNuN5+wOgRfhUrqeP7HyOOfoqY7feQWkNUjnH9L3HtnSW6372YnDrM7FLyeVuB7wCVZ5/8IfDDpw87bKrinhhHcnRs5FCFBlXKDrrWwGNBYH934PonX6yxB8y2AAaVJEJrbsjV3zkPP3sb1iYHbDgzT3KPXOLgkyy+pG/ERMBKcqx5YQ0642G8TIVJ1nNAk9pyXubvuWb5evJz/7v6zuyVLnNgiI9z/YPCnDmJEMyLpUDANctm4bo3kjjTbB1ZMpWuvWD1vmGw46vIvjcLcDJJcnC9fCCZn11nPkkocb35e0lVCCXHFSv/MbFI96GIxt4qjLV6xDMwGhNIukEfQOdKl/zcaM8/qGjSEPCwIjetuRcve2Ta02m87YAMUQjoj/fEU04IpF2hri4lnwfHbgB5GePsn7Rr3tGmrFaP8yFurgqekahSUbr7/J9z7dL/Ijvlo5S2RkN8LIlPyqAKrn8T162YxiL5j4QpJx08K0mw1aTYZ57ZBNyTvkbjuZVGdLaaRFvJD8sTcc3S9+F6N6LWSwrBDsvDUI3INruU+u/ghouWjJ6VnkYVdreGXLN0BY4/cwfdKUd40NgQK/jZL3Hd988C+QJffeevEYlGDJRZlYYOf2jFgcQsRPXvEHdK3QpFMucu4aDFTVs2jzew55WE6woSJ9Ur7LvTFARTn26u4PoG4+x8RGHlc9ZCHNR3l0pOkpc9Grt1DvADZnc5rCLaJ6a0UuXchk8TCdTXtFPSyMYWtmY8INo7YZoVP6v+CLWXj9pFdnS0TnFcQ3lwE4PlX6a33K1w44RA2jVAIaHyy/34+21AnP3RaKxc9EQiOZ4Qx01jfkdPztKlhnV3/h3lvjn4jScQDssZSWrcKXFo8Rv+nevuegvBwF/ztdYN1cTQQs5KWmKokhTby2yZwyrdpuxV/7Y1lRxkSH5Y7nMNTDvuMzjeXxNHST7K9sLI4vouweA6JPwLUEl8PKNZmpWcJPt1gsGPIMZL83zr0TaTRw1LSqapnbDYznUrfsM1y36B0ccRdx0wiFrB6hTEvB6RE4nsWfhN09KEzfFUaoiTHIzB+9kYPJAe6ldHAdAKI4+5gEzT9MTnV1fotiKOEIePEUfrwO4kTKMVH8tURGaNI9xcMW7SzRbuHldR3j2OklT2rllHHFscY8YM/97WtzLD5ueageJekUeVpnuR3Euxv4hxGpKedXVLJYufdSj2/4a/fOMLaaX4CYG0z0mkm99f4to7N2NG6vI6Cg5rfAcdbKlCSaPzW6WzU+jOD3Ld0gXEwb0Yb8p25W4kZczBYIzftBD0HK678x9Y1HULhXxchbGmb1CZ+aCS77LbM5VVKSTXJayeValuEFUtmw/cdSGq/4zX+GaCAZsyYxlBi1KUGI0W0H3ZuqQP1A5yzKo9j97zEB3LeshMupxSX73MkjQEW5LkThzczEk4/klJ3bGYqktKBIybwCVROZmrpJbdOGCLStM18yUKrTGtPSP49vZRmkOSXqF2wU5YNxERl7L4wj/u8nP8xQ/3Iyw+inGnjo0oVGCikiC8i4Xfmc4tl62vJlTvKyhJo7eFcjwA0lIp7TiGtQGqGTx3ErBhWz7eHqS8JGe2iyc57NE/ksm+ldKgrfuciWhSYqoC1/VuS/+YEEj7BgayLSlMt9Sd6K6qGANlOy1hFHO2QUk7YtiLLlnN+787n2zjMozrYIfX0kuTFcv9Ma5/GMa9mQ+c1gHf+xIv96+gMLe/5qZJDlFt+aKZuSQvrDZqJtfjM635z4G/RJzzMQLl/iSabjs+oooxSfJ0ub+DGy9ZWXcByZkPJlFycvenCQYuxnjNyfjGhXEnARFhSQlLNg3NlipzEDStDShp5QBnnD0k47Qs0m/ZUro9yefJvTrSHiq5Rx9adjSxM5uwSF2wqKrFbzAEg7/mpose5FA1dG3fOrL+5+hyyJ/7Mh3Lf4SbfW9a7cEZgxEKNo7xm6dB/0XAjbQWzD6hCFTmYSAo4ZjNGNOCjce2dtQCkiEyU1PJxh6qRDGUCiR5gzc9eg+u99Zx+QRFDOUBi2N6gd1WLmhCIO1O6q1qCZu2qT5SxyZWMOYgoD4fRKE1ZvZKl6/N/T7XfPcK3IZvYZykodn29e6cJPEtAK/hTETOZErDU1y77G5EfoCvv6dv4zrysn25lI77PFg7AytvwMi5oO/Ccd+AOBAMJKGjMoLkVSxiwG1wCLZ+nBsvvYHZK10KdTps83lLbpbDotanuHbpX5FpvIkgDtNQ7vFV406sNrNNRg9D+IZwkrpVD4vjQBxFqH6omlTLq6WOXZp7FJoc2cYGSn1RXfleIoq4IPJtRJTZnQ6S3wX/zUqgS+DO76A2Ny4/RhLQMx+4ca+W3KmHDp1cZG3fJoxzKHE4BgAnktTS8w1SSiJt93RF8xqJlG7/lYSlT6SKWX2T7/iGsPw0m7O/A6B19+/9CYG02zQleYEROeCoGxLg4HF9x6q5EbNXutw49zY6lkU4mW+AkyUKts//EZKNloRSg+u/Htf/ADb+AOVSkcz+T3Pt8vUIm1ApIeqjTEXX7o9wOH6mBceDOCBtS2DT75ARtOgYx3UwDgR9H+WGS7+YWEbjjB6qBHHccMlirl3+Jhomf5TSligRuPLKRbIlFq3iZR2KW/+SGy/5xausg7GQn5O2XI/bicP6rCM0aQ4cDBSJdfkQ2G+nIa45MXlR4rt/iA5uwHEPSDurjrW+Ji2AexbvXzqTr12yeo+X3KlvajUtsBtx7fKNSL2wfZoSEZYOTBCCvRSpmUstenF/Sbn0Eq63/8hlhLYbp8XPGsLST/mbw4q7s1zQ0EWeoF2jSpQN9vnxQcAK6FFVqGxcQqnTpfviAkHxfOA5Mk0OqtGIzcNEEh9JFFpK/RFB0WJMA65/PH7jOfhNF5NpbMNvuhS/aQ5e9o2I00JYtpT6IsLAVtuFjMSwVCP8BgfMVsrldm645Iu7xKwLrUlb8Bsu+iuKW79KZpKbxoG8QoxHY4wRvAaH4tZ/4MZL/pucvpqEEeR6DIgyrel0nMyb6+p7VGFCbhaI7+Wmix/bLQJA0qjKm87biJEf4Gap0zEuCXzY5OFI2zarbx+gnkqzPXkx7Yxb/3k2cmSCtOw1xTlxM7z/iM0Y+Tl+A3UF5WhaUFglicyds2fywSYE0u4iq0+MQxYJcQyqR3DF17KpD6p+DWlVPkoO9aW9lPvPIgr+h2yLiziSCKYRJKNgkpbqYtBYCQNLWIwJBre9wsGYsGTRWLddP9oe0RhM0ok1ju4j2jqbm3YU3j2O2cmTlPO54d0fpNT3KYyXVBfelU6v47eKLGiM1+ggTpHSYAc3XvKZvdAaZU/K1gV4WcZVgieRW4U9IgBC/Q4a19ulNkEWogBEcuR6/CR/R1/5HLAHK9aNPJUWO6mvcae1AG9MpnbO3lO45lTOtNyTVo0YKwIDjONQ7A9wU/u4d8/0AJsQSLtKFevGcZ4gKEbpnOoYul5SVdc4r6dh6uEAdHaN72BV4K3F732ar/7ifMqDf4OYjWRbXCoZ7qNqalJJTHS2e4nsoE2AKmiMquI3ORhTojzwWZ57ZjY3tv5u98FYouTziSZ3w7s/SxC8gyh4gEyzg+tVnNkxO1emesfQHMTVrqh+s0NU/ilB+RxufPcNrzKYrjKoNLm6ZzIqFxOmuUd1w3X9fXgNK5L/7SYmVGmx4pZWEhbX4XimrgoHghAFFtd/A5ObzgJkm3XyClLVBxw+WHfxA0XQCJQ3ccXK7F6p1lCh3lSps2YlpYF6Uh4sfgbQB7jrd08lEGXXHvHhJdnp9b6o/tz3EgFFNXk2qWMcUjumXaNKdWBd+yg2XovxtI65VLAhXoOHNWcnm2QntM9KeSH+0dJ9wecxwWmUB7+OmJBss5O2Zt5F5p0yaTRGHMFvdnBcISwuxUZn0n3hp1hx3SCdanYzs04i/mavdFl80Y/ZNPhWwuJHsfFj+I1OarkkME5iFSaCMi0SNjZeWtkvxKBRErTgCX6Tg5c1xOFvCYtXsOiCc1i8rZr6ntu/jg45Y/WexbH6keVShm0bzsXLziAOo3QGxrp/hJu1xNzDf79jbeIz2F3+mmoy9Bbg+7hZi0hY17kRIhzfYqJ5gFZst6pCUe8cUsMLdpdSGru/JSpHVQt7h9+vEAUxrnc43uZZ26DVkZQktQg2ierY0Su9ZqzIuUoUbf/DDxPbNXgZRYlGv69EuJ5F9ScJz+kdOw9tXM9dfX5cvEz9jFCtwctAPJjd9xRB4+NlDFHRx9QbqyEQDZhdZpzJ4RqkY/kPyLZcS3nr2FXo1ZrkOc1HWPiN27hlzmCqIY1PcCRMQsj1GL588WPA+/ngsi8QFD+Achl+43QgybuxUZIfJKmVVBsSXeHTFYdsorEmQs31HcRAVNxCWFqORl+h+6Kfp4coaV2+p7qmrpobpcIgAL7IVUsXY+NLEJkHchZ+Y0vSrC+GOISKYThSmRtVSZKWjSAGHEdwvG1djONoLcFgL3Arj/z6B6xKo8kqLTb2KOQbu2QyBmJTV9XxbWfRG/Pazk7DWj6AlxU0cutKT1BrkrnRJYkVsEe0dyGOv4NwFY7n1zdu9RN9QubxoRX/wJcvTBI08ygiWbyMQaOx51DV4PoQh427QSlNIPdDex9mbd/vaZxyMsHg2H29NIZMi0MY/DWdnZezesSrfPxGQ1hOqmTsiOLIx2+Evs3emApBjzq0SpmbHv0ZTZOPRzeNfn+1floq64dAfeHeIln8RkMUGUydLLY8aIRr7nxn/faUKjQYTPgiX33Xb/cZSAJRrvnusbjNRxAHMWLN2NponBywAfcXfOtdW3dKGAx/hvd/7wCyzokEJcWpA0eOInBcB2n4WdI9ll1LjuvsNNBFVThc0XMg2eYL0PjdwJkYd3+8bPIVtqKUaE3VEkkOUeUVlSAOtoD5BZi7IFpG90XPVJl09TDupXXOFYZaYVetOBxXTkft2cCbQI9FZCoiGYxHWgC1cqioJsrGkUW0iLIWcR4C+wfQnwC/ofuil7ZZFz0OhdY9jQgka96xfH/wTwFrsbHUdRbdBkOp/BCLL3x6h/Xdcj0OUxvPBJMlDuvbm+IoETBp4Kd8obW4x0bf2eOz1j8HMWbIudwh41XFiIv1f8lN523cxgPuOBk3uz9hYMccY6yK7wllW+LxX/+sqnzsKh+6etnRZBuOolQc+xlEFVwIY8vjLatYVROVWkn8XbTmKDINx0Ixxo5xP6tKtsFhsPgHOo59bsfJw+nzLvrjYTQ1zSIKR79/HAtiLZOa/5fWw+rbCzc+dAp+0/7Ykh3zuavPH/3s1VcUcoLqOORpwmst8766ZxpO41tA3wIcD/J6sK9DaaoWFkWKwAawz4B5GMwfCAZ+y82tLwxhbhW48JVSQHIFk5QyGgYhXbW0hYx7ALE9CJgKtBCTSeIDTYjaIla3ovoScbCOSc2buP5d5e2YdzK+fROanqAJeg2T7FTp/JGYwSvOhDvNTnVe3K2MJ2WW43+GPcPcVYXWUZh3Lc1e6bJqTjyqhq0qzOl1kjbz+9C6V9a8UuJop63KOYbVG5SenH3lytHs7N7J2brqyg2vyvGKnI9RaGfbdwx/tp3nAfEryocqFVJGO3sFDEOcZTuczKTgab37eDz3bx3HPHWqYRZS/3MDra12wkL6k6GKZZG2nU/q2ekwZpZUIW6tue4VZdLjhb6UtA5fsq/XHyDMqbmiEg01M6fbyt/IhBU0QRM0QRO0bzHzCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCZqgCdqOJqKrXn3rMhGm/MqcBd1Hn1df4e+S18ielImz9cqTMzEFrz7K5XJOLpeTVatWTRygvUSdnZ1m+vTpZvXq1X9SY54zZ87EPpugCQvpT5fzYU5fnctk1q8Pp0+fPoQRrF+/XlatWhXVMoz8vlYx41V6DmbPviLDnKei6atHmPM5c4ZXqHjFtelcLuc3Njaam2++ubSnLYZcLucUCoURKzbMnj0729DQoHfffXf51bwBZl8xOzt9cLotFArBxHF45WiiH9I+ZPUAtD86/4PHNDT+/sCDDnnOOP4Lta8ZBx28dt68hQ8vWHD5ly5pazsqX6n0PUG7NOdtbQvOPfQwfnfgmoOfGT7nB844ZF3bI4+ua5s3//dt8xb8bS6Xa6amHO0roUCed955GeP4PysFwadrx7G7hdGlra0nzV9w+fddz3+mff7lz7S3t5+WKkIuwKWXXjrj4MMO//WkqftdvoeeY49bgADz588/8lB7xG+N8S59NY5jQiBN0G6nmTNnJtqn1Qus1aOBJYJ+q/alVnqs2mfFmL9o8jL3zZs3722AVg7WBI2P1q9fL+kpmOM67nGicreg30K4tXbeEZagsrWxoeGzrpe5M5fLNaf95PaqUOrs7BSAyZMnH5ltyJ6satYNGcdu5Ant7e0HNfrZu4E3WWWRqL0BeLb2wmw2e0ZLU/Mbjcpzr8b1X716tQBYK6d4nnu84/DcxKl4ZcmdmIJ9giSfz9uOjg5v69b+k8Mo+mnP7bd+ZLSLW1tbT/IzDb2qctN55513Yj6fDxgdRpJcLmcqTGvOnDk2n8+P1cRuLIf5GO9X+yzt8Ds6Ozult7fXAEyfPl1Hg4XG+G6pMOrxwpdz5syxq1atQtC3FUvFTUtuv/WqHV3f3j7/r5qaWz4/MGgXishXZ8+e7dZCqMO179WrV8v69etlHGMb9fMzZ87UGgZ6go1jxeHe2nHUufY7nKOOjg6nu3tRBAsWOo45oFwqHrdkyZI1wy6r3KN/a1/ff8dx+ecA6RiHjKHm+6rPshPzsbN7Zaz1SG4u+rbBwWLJc83vRhrHBE3QnxRVLJx58+Ydc/n7rtC2efM+39nZ6eZyuYaOjg6v8po9u9M9+eSTPYDW9nn/fuX7r9bW1oVvqb3HMGbkjPWdOwsb7cL7O/zucTyX7CK0IgAXXnhhY1vb/I3t7QvuSYNF/No57+jo8HK5nA/IRRdd1DJv/oLBtvYFd40G7aTPP+Ic1Pm8o44rfQ7a58+/vn3eglJHR0fjaHO+g++SetaovX3+j9ra5z9U+Xv27NnuzlqEoz1LPWu9q3uls7PTjHZdOiba5s3/Rdu8+b+pd/9O0ISF9JqmVPOzVuQk1/U1KgX35vP5KJfLaXd3dzz8EHV2dpqH1jz2iII1JppeCz/UHCotFArxRRdd1NLUNPmMWO2xjhComvtvv/2b9+XzeTtaUMS8efP2j6JICoXChpHMn0svvXS6607RQuFrI76fy+UOAJxCofDCSMwpn8/HKSx0ihr3JLGacV15sFwu/zSfzwc7Cta48MILG5ubm6fcfvvtawuFQnzxxVdMaWriqDi2g0uWfPOh8cBf+XxeJ0+e/HrXzUwtl0s/LRQK8ezZs6VQKEQjMHFdvnz5QFv7/H6Q/aEGZh3BImhra3uD4zinWStTjDGPbdy44SeFQmGsRpDVdcvlcgd6XvZsiA9RNetKpYFVhUJhHYAqpwv6QHd396CqimxfjV0KhUJ84YUXNjZNnnyWxHI82KK15lc9Pbf8vva7hq9NqeTsn83GrsLJitzT3t7+OsdxTBAE64ddL7lc7iDP8wZvvfXWzduPqdO0tz9yoOu6W2655ZaBXC432fcbzo1sfDBinioP9v00n8+/vKP5qN0rrQsWvNXEejKI5zj84eGHH743n8+HO9orte/NmzfvGDXmDFSnIfL4YF/fyuXLl/dddNFVLaKlNyl8PT1fzmhW7wTteZrwPexm6G1nPlSJplPLqVEUSqTO70dieAD9/f2Sz+cV1WmSrN9Lw66V9DQ78+Yt+FRLy5RnFbvUoJ+wqp/zfPfX8+dffm8ul5tZEUrDNU6r5gbH8X5Wo9lKRfNvb29/c2NTy0OOU1513oLzJg1/f/78+UdmMo2POo53zXDtuLOz0xQKhfiytrY58+Yv+INxvF+j9p8UPo04P/b87COX5tr/bPhz1d6nuXnSvyvOckDa5y+4vrEpfqGxKXsfRB+r1XrHoooAD0N7ohijIPfVrsVw4ZVaT41GpFEk8TXUKgEV5vee97zn+PkLL/+R4/qrreU/gE8g3Lnf/tOfbG2dt4DRAyIE0AsvvLBx3rzLv+h6meet2m9Y5W8UvbGxqeWZefMWfAgQQd6kVn6ewnDOMGjLANrevuDDkyZPe8ao3KliP6HwhWzW+938BZcvv/TSS6fXPkdlbh3Hv3TSZP95x/UfFZEpgl7iON7zkeWHU6dONbXXzps37zg/2/hIHHNxqoQ4te+3tz/yVsf1Hg3D8LC2+Qs7PL/hcav2elQ/5TnO0ubmSQ+3tc0/n1F8oJW90ta24O3z5i9c7aj8SkW6FD4txl153PEzH25tbT1npL1Sux6XXnrpIfMWvG+pcbw1WK5XlY+JSmHSpKlPtbW1vb25uXSAn8k0qujPRlv/Os78hFU1YSGNtUlq9pUCXV01m6aLnWpWNhrNfFDp6tKd7RtUwayNcHYQBBumTm1eO3v2bLe3t5dcLld9zpqwbzXIZcVyaZPnumsAUr+QdHZ2yurVq13XyxY8z72oHASftlFwc1/fgS9ms5ubheDtjucu9k3DXbnc+0/N5/MvpYqJ3cZg9SWF13ueNwnYVGv9KOZv/Exm2mAU6X7sNwnYmn6nADa2tlPFZkqe8xWAnp4eKyJVBtGWm9+WyWZuj8LwRxH2Kt8xq8vlspRje4LruTc2ZTN35nILTsrn82tqNdzKfRTzdsTe29a+4FbHOOfEkf3sQLH4pDH8KmXQo/lThlDFr2KMnBFFocSx/CGXyzlTp041uVxuyLVdXXkrgm1rm//ehsbGpv7B/ltHYn653LxT/ax/j9r42Rh9Z6k48Cvf98vWylGul/n3xqbGW9rbF66//fZbfpiGUse1SkRqRXwfkbfGUfh/wN5xwAEHvLxhw4YpVs0CRP6rtbV9sohkFPvLYQxUcrmcyefz8fz5ly/yM35HUA7+VbBfecF//sWp9rAmE4YXuJ7z9Uy24dsdHR1vnzFjRpzP56v+lNgNfueYhnfZyJ7re/7HwiD4iDU8qiFburu7w9p5UzWnuY7TFDjh72oVosr7FjOb2FoR56OgcyNrr9GovHJqcWq4ubH/FMdzCsaRm6+66qqj8vl8f62ltG0+2xdmsplvhlHw/Siwl2/ebB5uaNhqNNt8ouuar3l+dkVbW9uJ+Xz+Ceg0ULWUUuVg3vGNTf49qlbjyOZEbO86f23/gaUDDzBiPiXi3BrGcTcSWbH2N6MpgWOQpidD6EJ2L1/JKXTVbkQdKvrG9NP+yQokqV2bEZdsLIGw/kFhzpxRMC1g+gYdcaGGLFJVIOgQpUWGP1x+989kPs9oUEgdc6cLFiyYFFveKLCiu7t7cEcfaGub19XU3Hxqf1//J2+59ZaBCnOrQBxtbe1fyGT8i0rFgXcsuf32H9Z8tAz0XNbW9vKkppYfxdHgh4FPpzCFrTATgScc13WjsDwZ2NTZ2Zne9/I3QNxaHBj8vojMsdY2VxhAos22HeV5mfcFYfippd+69eVcLueISJwyGG1vb5/let6tYRB9/bbbbnn/sGH99KL29j+bZDJPOA6fAK5avXq1Sc56AkvlcrkD0HgqmLcj2vvcs3LUqlW3lIYuQ12BDbJq1aoYQERODcPwsULh1ifT97brinn++edl2tv3W+D53k2Dg4PL3nDssXdUmGbl2S655PL9vAzL1cYPbnz5pXOG5eX8cfbs2e8+6KDDHkPsvwA/rHWcp/ChdVz/ZjFyanGwfNJ3vnP7AzWffxH4fOv8+RnP9/5fFMWl0OgQBprL5ZI1mDfvrzMN2Y7+rX1thcLtPTX3KAHfyOXapbml5etbtw68o7s7f1etYCzcUngMeKy9fcGfRVEUWBt9Zck3b4tHtObRt5VKpYGMax6tUYiq7xuRN/h+prFcLp1YGnBPXbbs5s01t/lJrr29szHb+JVSKT4WuL/yHJW9Mn/+/BMc1/9mFIXdt33rluuGLclPcrnc3Ey28XGM+RjwwVxutSkUAFQ6O7tYvXp1s+c7y1W1ONDfd+rSpUtfrvn8s8AH29rnt2QzDX8XBMHjnuc9UzuOccgjAakoo3tWOOTzYyvgQ3jtMD47vGHlUL8BTJ+l4xOII4JDursEUn2Dqjxk9eFqF0J29KxjC4RV+d2zSElLZJ8Dmz3Kkd8QWd966uMYV2P1FcdTqz5GfQfjoeqrVR+xGTWSBcmqjRsMkkUkKyIZsBlFsqgm/1PJIppVJYOIBxi8hkaCweVB9yWfoVPNqG2Jh0JRplAoxHEcv8HLZBuCIIja5s+/kBi/ljlascYYc5QoC5uamt8y0N//rcmTmz63TZtMDnR7e/uJmWzThwYGBz9TWHL7D3O5nD9z5syoYkHlcjkpLFny49b2+Y8buAD4dIU51yzYs47joNaZArBu3bpEyEr8aUTWWNF/9x3v/CgsN9e+r2I6rY03ahxenzLq2vGrxXzRWrvhpZde+MtKYmcmk4kBNm3a5Pbcftu69rYFvRh5Z2o5Jv6D1lYDxOL7R2Vc/4CgXL7v9ttufT+gHR0d3qZNm+zMmTN1nFF2esUVV0wplcPjERlon79gETpi5ZJmgaPEmCOjMPyvzNrnPpG/7VtVxae1tdUBYj8bf8qI97q+vtLpp512WtjS0tIwderUCGDt2rVeQ0NDOdb4NsfI3+ZyuQMKhcIGVZXW1laTz+fjefMWvruhseHirX1brvjOd3oeOO+88zJ3f//7ASLMnj3bmT59uoYi33Ss/hPI2hbfe6qGgZpCoRAvXLhwulX5l8HBgZsLhdt7crlcAxBPnTpVn3nmGXPMMcfw8ssvLy+ViiVVfSdwV23IeC6Xc2bOnKmPPPLoeQoPFAoFO3v2bLc2Om+bVadngPzhlltuGaixZCV9X1T1VGvjCI0XLlt26+aOjg6vu7s7qozFgY3WWg3DkFrBmk/Os8aW64ni555/3nxkpL1SKBSebW2d/1PjDN0ruVyryecLcWv7/I97nn9McbD/hKVLl75c+X6Ajo4Od8aMGfFDDz36ddd1FwTlYPWwcdSlRJLrcTJTl92q7vdeT1guYUwIGgpSAsqKlhApiaWEaAmkpFBGtWxFS2KlhGhJ0BLilQQbgg1jS4BIII4EEsShOASCGxrCcNCTgM0DIW4U8PqngjRhe5sCPoTXjsAbV+0Rgbi9kK7KkFHkxyjGhDvUjqlzUKM+nAqdvQ4biw7uFEP5OYcIB7IeNsxmjGRUTEZj9V1HfRXJaCwZFTIgGcVmDZJBja+OzRBrFiNZVbKgWUkEREaUDGgWyKhoFiQraBZMBsVXwQVcymUPxLUuLiousTqiuCLWxeBgHDAOiIOIGdMJNDLwn06TjcFvRMPBpLbMOE13VTkJBEHmOcaZl3j3ZMjyxHGMiPlN/2DxfUtu/9Y3R7LIVMxfhlFYbMz6n0ux9ajmkOnMmTNNYhjwMMqbaj4vFe02yccQrDUHAHR3d0fvmf+ew13jtsdR8B4buU8Zz6Cq0yrvz58//0jjeJeXw/AjhUKhv8Koq1BdW9uxnu+/vVwuvu+HP/zhwAhTEApCm5m/RtAzUgYSAlK13KycYhxHrOVTgM6ePdutQEnjoYoSUCyGs1zPaY6t3YrVcxUxIkM1PBE5TIz0R0F5Xk9Pz/dGCx5wjHQEYfjFZcuWPLVsGQDF2rElfpUFDxvHiU1spgIburq6pMKIrbV/XywWHy8sWfLNVlWnUCgEFQg4VRj0iiuueKlUDmMVeeTmm28uVZSQioUbxrrQcx3T37flwymTrn0G7r77boBya9u8jWKSwIxayC+1sie7XuZ4VfuVyr6qDd1O/UWTRcwbFL443JeWzu9BjuPMDILw5p4lS9YMX6fEmp73piiK1HX16eHQ54IFC2YaxzsrKBdbV61aMlIlijCFW9cAJ9QeooJIvHDhwqYo5qOlYumOnp6e3w///hSqtPPnz38piiIF/e1I4xgb931QdNqJJ4nfcDTigBkaYCk74CEjhh1qDNbimDjhJ7FGuE6EEqnYOFY38iONaGqJgIgXpkZy3dIQJUiEnZaBkgil6t8qAUpRjZZQKQm2DFISpITaAEPZipREKYOWRSmLJRDHLUdQligMxNpy2bdlXLdEGEW4xGSIiZot034Zk++Ka9CpRLhUZUh+XAIuEUgdyxsplab6Df5ko3ayQoviNKuRJrW2yUCLIM2INqnSjNKkhkaBRpRmQZqARmVZhhckA5qR8gYfyfgY8REHXC9xx4pBfIOK2fa3VAShVH2EUmWzFlTTV/K7Vv6XqGLJhTU/pfK3OrXvKYpWJYhqhI0VG4FKepHI0F2kMurWUh36TxGLcR1UdqqUi4g5MwxCG2PfFsR2E2UcxzHVRXZda0tFd+PSpd98eQRAVBLG1OnCoxdEYXTPrbfcunlHGp+Ah1CqFWY1zPF54oiY6KDKd3ia+bs4jp+/7fbbl7a3tR0SxwZrZXr1KCl5jeIXDjxgv0Xp89gECUgiCMG83XEcHOPOa5+34Lz0ybXmgURRa3DeYTU299+/PUwkqucUBwc3q4Y/qWHU46Zt/iNOyGQyDPQPti7pufXeEeBWaW9vn67q9mQyDd9ckFtwxrcK31pTgdgqgq1x0qTTHNdr1jA4rW3e/FuTodQqCWqAGNWTBHG2oSS9ZtWqVVEu976DXY9Twyj6ZxHR2bNnD3uOJP7g5ZeD5uYW46nqL2vHU5NP9c44jqWhqfnL7e0LZEStXhA/kzkoKJV1JCEt4r/B87xMOSz/bDRBLuK90c9k3HKxNOSaSoSaiPsWz/OwsX6rVtEZ8qxG3hZb+1jP7be9TJqHlwak2Ciy52Z9BzHu+9rnLbhktL0iwvnWaoVp6Ow5c5xVEMVxfFYm0zgpDIqLh39/reCJY2lxPZGK/3Gnzq0yQFiKiQI7Ak/QkdxNQ5i31rhnRaSaw6cqiAiqPpABEYwgGDDpkCv8MgXaRYb+X6Tyv4TXbnuZbVtdU1iglo+qRVUxasHLgFoyasFaMC7ENmSAshKWeeGEMh3LysLSkiKDCAOiOmDRAcHpR3RAVIuIDKjQZ2PbLyr9IvSJxv3Gkf5Y7dYg9jYRbdySCKTudxfJFcrBEZNfZGPRYSDwkYxHeatPBj8TZ3x11VcjLrG4asR1VR2wnlpxMeIq1gPJqFUfx3ga26wRyahoBoKMQgaRjFH1VSSrKpnEqhEf8AFXsT6IJ4IP4qGaAfEV9RB8lIwIPio+iRVkUE0kWirgqgtinKF/ixGpCByt7G5NN4RW98TQ/9X8rjp0B9X+nfweJ7EGOh4tSyq4+cMPP3oq6MOF22/7VR0a/pDaYpUQ5unTn9rfddzXxRr9ApBtwmDb91UElKoeA+bxmvvFKVxCFEXrHYw16hwMyIIFCw6OrVwTq71OQC/3/cEwtrEx5kBA2touP8Z1ZGEURtdcf/315Vq/RA0zmBVHUaRKC+iU7aR8BfR1WU0sD99//1CNWlWlbd6C00W4t1AoBMOCAnYuqlE4vVQqBUHgPDzSdem8vtjaOv9TbkPDTweD4DLg/1V8W1XLTc3xgqiqGOAwRB0dqteoiApGNoZhWLDWvpSyZ2AVrhu+xXUbNArjn4wU6ZXLtZpCAds42RztOZ6US+VfDF/TXC7nqMrRxsh6rByGqK86oj9XBf2fGH48spDWt1lr8Yy5b3iQSHW8IqfEcQzEI0aDGiOnl8uBdcv8PrXKtfZZOzo6vK19/acYZFklQq9QKMTVcRszKwrDEHSyKvuNulcc8wc0/kPlP8cdd5ysWrUKizk1ikINw/CBYd9fOw4R0VlRFGGt/cNOBjQkoAaYRNQbUxEO2xRshgiNIb8PeX/7a6Xyu7JNCa+8qn9bsLV/YxMtXWLQUJGyqgYIAUogECJSRgkUDUGCBGbUECQEAoUySAm0LEjJYssiEqBaBsqClq2aMkbLgpRBy2BCUY0i0chDI9c6UWhsJLFGaohFo1AMQaQS4BJQNAHT4jLPETPzAAtzLHnUrUrsQtVfEaXO7yGe8OG0hwP1hc6VDk895RIf5DA1doisg2vcxtg6GhjXEnqqcVZdz1eNs67GGcVmFckgklHIGMUHySoJxCeQ0QrUp8ZHNIuSESMZNIX/FF+ETKKVkPiNIIOqCziIOKi6UvN7YoGLYDxB8euH6RKlaPXqp6Z7vnNUbO1NnZ2dZt26dc6MGTPi7S3cpMLCqIzYjyaL8TROQsFHaxVALnf5oZ5njojCcHEto6mhfoUNInoYoGGsnzCGF4nCmwHZsGFD/5Sp07aIw4wEJbT/GMfy9AsvPH9z6s+w21uAMj0Mw41Lbr/17J0ImNF58+bNcB3/0NjGi0Z55nFHNaJyhlW7ZunSW1+uONOHMz9VlcsuW7CuXC4pRg4cZSWn2jiScmngXcOc52NQb/od5kBVJJL4hZEYYzpWFWsviDRSY3Q7BprJZLJRbKfHUfytJUtu/cA45mKY4iBnhlH04gtrn3t2uJO/eo1wdhSGG44//vgnayG9bcJLzlK1T9xyx63ra9+vKE5bthSP9jL+5DgM/3eID70yHtUDozjasOS2W88Zz7pu2rQpWVfLQZFGRd/3N48UqJCOQ1W5LI6j55YsWfLsOAJihnspMhhHUsXUgkSoxkCsQgwaoxKR/F71L6EaJH4mSiKUUcoqlIESKgEp/AZaFmPKarUElEW0bDEVwVCqwGyxmBKqZYklEA3KBlMSLxOZyEYDjokpxRGOxLgm5sBSxGpiCq3xnmDeu3JTd8eMYIzQ6fH4StY/KFRCPIZHeqzeoMNCp5X83GgkuTda+Fm0pwRjrscwdZMBPJjqETT7OMVMJlZfPd9XB19j9TG4TrC5GWFtctJbx9zcFWe945Tf5PvNplgu/TKFLkx3d/e4D0fWmCKKGDWTOzs7TW9v75D3k7Iw3SEEVxnTiIh+e5gWXIX/2uYteFGF/XK5nO845gMa248WCoVK0mq5vX3+VlWaLr/8kv0Uty0oB/MS+KlqvQ1XavuBhoULFzaVy+VSbUmcdevWOY888ohOP/jgN7jivhsbdt92220vVYMwCgXAOdF1XaIw2tl8kSF+ivb29oPEyOut1cU1MI7dXo6KtrVdnjHGSGyj/lFuOyDG0ZZMZr/O2Z1b1h23TiqBFr29vea4446TDRsG9m9ocq7UOLzjtttue7h2fdRoCKrGmJGqPJjp06drLpdrMDhXW2vXLLn99rU1DFQAGhsbgy1b+8sYplbC12fMmBFX4KlKykAu195qPDPl+GOOubHWN1S1QucveJtR+XXNWsY119jOzk7z0COPnirCr4YlV0s+n7dXXHFFtlQOTwSW11rftfCtiD3ZiEtgGBIpWPXhCP2qNHz4wx/OvPDCC1GtwKrslRkzZrxJxTnfRsFXC4XCxlpfo4pGRsQEQbBdjlDled4zb94xvufPDcLgtuHPWY8YSgIEuuL4uDve75QHs7GVohhJghHiMBBHgoAwRLNlMlsCtkYBr399BL3DK8e/wqRCZ03wwcwDZHudKeUjw6PwRqPh0XnbBzCMGo3n7njSd3fodH7HkR4JZDRyCLlWBzbswI4iGCsCsFb4rVsjzDhWtwtznPlg8jPfpcMwXk21iLjiSB2H1Tjm4m2DQJzTVS2RjX49HCapL/gl0QCnTJny4oaXNm5Uo+fm8/l/7ejocAB3+vTpOnXqVNPd3R1e3NZ2qO9l/rZULn235/aEMdZqhhU/gap9QTCNjuN9FNWtcRwuVlXp6uqqbONNqtISRI2dIvGjPT23LRnJZ1WFgkTu8zPZ9w8OFI8vFAr3p2Vw4t7eXjN9+nS7atWquH3egq+CndXX1/eflX2wzRLS06IojI21q3caXqlhetaYmU3ZBjM4MHDvaBbXNid38DrHaSIIk2Km21kMlt+7risDoZyaX5Vfc17DeZmWlhbb29tr+vv7pbu7O2xrm/dp1818ILLRrcM/b0N9RHwRifRE4He//OUv/VwuF9XUXYvb2xf8Y2Nz04z+rf0ragUraWJpPp8P2+fNXw1yZgoDa28vZvp0FHBWrVoV5HK5AzMN2SVRWP56Pp/vrgm1lnw+r62trYf6mYaD4ij64vA5qfjNHnvssYM91z0kjKKv1AqZyj1KpdIRfqZhSrmU+KBq71EdL3pGEJSLvmMeqd2/2yBQfp3JZOe98MLLxxYKhT/U7pU5c+bE3d3dtn3+ghuwHN7Y2Pj54ULHwIOZTCY7GOkRwO8qn1+/fn21CoePfMnzfCcIy7/ceYtbNOrm59GuCoSRItIqaTDr1iR/V/hWRT7UpsEMEQQ1PLEiCEaN1pJktvNjBB/sDqozQm9fTIwdOYRcRmP0+R0LwFU7ITBHDKzT+izFmQ9qvRpQRfBY9JRSqbS1wXUfHwliqGfOcrmcc/3115fb5i24sbmx+f+2zpt3WXd393dqLemL29oObXL9H4uw2XPMX460TSsH0xF5xMJlwDlqtatQKBTTyLkKlPWkY5y5auNpKrYN0NS3MmTslcAD1XhpGAWf83zzuZNPPvnc4X1n2ucv7GxsaDijv6//vStWrBisMMvq54XT4zh+Ysntt68fIaR8/Kwk5uQoClVVHhjN4qoyKceZ5jhOLKovjAD9ibXBz0pFfdJzvH/J5XI/GF5yqbV13oLGpuYPDPQPdPX03Pp0TUkcAWTq1Jbfbu3rf8rx3M5cLvfdQqGwpfbzbfMWdKlyZXGwOCiifxwaLFIjZNEvtzQ139bWNv8T+Xz+X2vWIs7lcpM9v+G7au3mcqn0idTi0SGWi5t5i+M4NgqTYqm1c1KtbGHtrKzvaxwFQxJztwlv583JKTHbKVfboFJOV+GBW265ZSCJJKISTZgk6MbOd+I4+jcv4/wHdJ5fKOSDmv3E/PkL/zmTzZ5cHCxeWBttWLPX7oqiKHY95zPAhbV77eSTT/aOOeb4byDy5oGBgdAIf9gViztNMRlZIGxvFYzE50aPSFuV32uCYF+hiVp2dQnHWkfl7rAUtzl4zzvvvIwg54PeP85ciJH8ItLUkPlMsVQ8Pes3fLt93oJb1erdVqRshDNd47wfw4sD/aV33nFHz7odfZe18vikyZMO2rp1y3M2DhdVhMDs2bOdxKoz66dMnjxj06ZNP1py67eWpb6jkSCPiga/Ntfefm3Wz37zmOOO/+PRRx97oxoeFThccBZkfP+tgwMDXT09t30nvb7CsDWXyzWIyttVdAk1uT+7JJCEC4MwYHBK88NDmOUIZNRY13UdVW0YZWxBW1vbQhH3B56XWd3ePv/LOPI7a9lP0Muymex5xeLgN9/w4jH/PGzONZfLOd3d3WFra+tVvuvdrW7mj21tC79kRdc4Rl9vMFda1Umg/+I45j9iMduVOKoExgA9j6x57J0NjY3/0t4+/xwr+m0R2SKYkw1yjQiNQTm4+I477lg/0tobtefHcWx831+d3LfHVjZ8VVFBzrPWmv7+RJBX5q0mcvHCMAxlypSmh4cpVxVf4P7G9U6MovA/AebMnu2wrXZcBQJ8Jpdrv66hseGm9nmP/VHtvBvV8IRR83pELnc976SB/sFP9fTcelfNXknOZWenWZLPP5tra/toU2PT9e3zFv5KiL9urbwgjnmTY8xVcRQ/qXF8m3Gcv9rK0HGM3yG5Az/Mq0wY7As0UcvuFaaWlpZJCMtBbtgdwnPx4sV9fVs2nR9G4WeNmLd7vvcNzzFLjMhFlviLQal44h139Px+NGE0Z84cmzpPfhGGYUGtfrxQKPR3JVahVt/XeGWxXO4B+fsU0tkRpGg7OztN4fbbbxksF/8cWC/G/GvGy9whmC8gRMVy8aLbb781XxNcUCXHcSaJMd9V9JZdgesqzBsQVfk96L+v2FYVQ0ebiyjijwPFYkFc6R/+/ZWxLVmy5GdBuXiGqt6LyP/1HO+7jsgNxpiDi+Xitbff9q335Vflo+GtPyq+m56enpWD5eKfofq4GP2XjOd+V5B/RuTROApOtpbfx3Fc2Ai/H4mB5vN5zefzevtt37qqVCz+H+M4x7jGXew53ndQ/bCiPy4OhicVCrffM3zte3t7UytUXgij6Evf/GYltUB0+FxYqy8GYfiVFStue2kkS9giT6H678OrjVRahFhrmwW+rTF3jGSZVPdK4fbFpWLpPBE2iTGfy3iZO1T4HFAsFUsX9PTc+tkR93Dl80uWfGmgf7BNRHwx7n97vvcdgQ+rtcuOO+7oPxNHnlL0S3fdeuumCS6079D/B+0Sj5w/eGy8AAAAAElFTkSuQmCC';
+document.getElementById('liWord').src=LOGO;
+const KEY='prostarm.buyback.v4';
+const N=n=>Number(n||0).toLocaleString('en-IN');
+const today=()=>new Date().toISOString().slice(0,10);
+const fmtD=d=>d?new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+const stamp=()=>new Date().toISOString();
+const days=(a,b)=>Math.round((new Date(b||today())-new Date(a))/86400000);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=p=>p+'-'+Math.random().toString(36).slice(2,8).toUpperCase();
+
+/* ============================================================
+   STORAGE — IndexedDB (replaces localStorage)
+   All application data, cached masters and cloud connection
+   settings live in one IndexedDB database, in a single key/value
+   object store. Nothing here is hardcoded: connection details are
+   entered once in Admin ▸ Cloud & security and persisted here.
+   ============================================================ */
+const IDB_NAME='prostarmBuybackDB', IDB_STORE='kv';
+let _idbPromise=null;
+function idbDB(){
+  if(_idbPromise) return _idbPromise;
+  _idbPromise=new Promise((res,rej)=>{
+    if(!('indexedDB' in window)){ rej(new Error('IndexedDB unavailable')); return; }
+    const rq=indexedDB.open(IDB_NAME,1);
+    rq.onupgradeneeded=()=>{ if(!rq.result.objectStoreNames.contains(IDB_STORE)) rq.result.createObjectStore(IDB_STORE); };
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error);
+  });
+  return _idbPromise;
+}
+async function idbGet(key){
+  try{
+    const db=await idbDB();
+    return await new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_STORE,'readonly'), rq=tx.objectStore(IDB_STORE).get(key);
+      rq.onsuccess=()=>res(rq.result); rq.onerror=()=>rej(rq.error);
+    });
+  }catch(e){ return undefined; }
+}
+async function idbSet(key,value){
+  try{
+    const db=await idbDB();
+    return await new Promise((res,rej)=>{
+      const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).put(value,key);
+      tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error);
+    });
+  }catch(e){ toast('Not saved','This browser blocked storage, so changes may be lost on refresh.'); return false; }
+}
+async function idbDel(key){ try{ const db=await idbDB(); const tx=db.transaction(IDB_STORE,'readwrite'); tx.objectStore(IDB_STORE).delete(key);}catch(e){} }
+
+/* ---------- CLOUD & SECURITY CONFIG (set at runtime, never hardcoded) ---------- */
+const CFG_KEY='prostarm.buyback.cloudConfig';
+let CONFIG={
+  loginFlowUrl:'https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/03/workflows/368ce54734994f8e8932d89df354eae3/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=o4BVsb602i-IMCQBk6kzXLm7Ocf7QATZhjl05XlAEE4',
+  masterFlowUrl:'https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/21/workflows/1b862ad22d874495a2a91e5b5de6f06b/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=HvizmwoX_6v9vT6lpKUpL2i--xQD8XKgSG8E3FfWQak',
+  flowUrl:'https://8549b42c711be8948675eefb5cf215.dd.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/25/workflows/6e1956995d894d2388bbf1a6ef06d63e/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=XUpeyHj0Iz4YW3dqUxhN1MJYkDgXalEwTk8wY9IFCE0', spSite:'', spList:'Buyback Provisions',
+  sessionTimeoutMin:20, maxLoginAttempts:5
+};
+async function loadConfig(){
+  try{ const c=await idbGet(CFG_KEY); if(c) CONFIG=Object.assign(CONFIG,c); }catch(e){}
+}
+async function saveConfigFromForm(){
+  CONFIG.loginFlowUrl=val('cfgLoginFlow').trim();
+  CONFIG.masterFlowUrl=val('cfgMasterFlow').trim();
+  CONFIG.flowUrl=val('cfgFlow').trim();
+  CONFIG.spSite=val('cfgSite').trim();
+  CONFIG.spList=val('cfgList').trim()||'Buyback Provisions';
+  CONFIG.sessionTimeoutMin=Math.max(2,+val('cfgTimeout')||20);
+  await idbSet(CFG_KEY,CONFIG);
+  toast('Cloud settings saved','Stored locally in this browser — nothing is hardcoded in the app file.');
+  render();
+}
+
+/* ---------- POWER AUTOMATE / SHAREPOINT SYNC ---------- */
+async function syncToCloud(kind,payload){
+  if(!CONFIG.flowUrl){ return {ok:false,reason:'not-configured'}; }
+  try{
+    const res=await fetch(CONFIG.flowUrl,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind, site:CONFIG.spSite, list:CONFIG.spList, ts:stamp(), by:ME?ME.id:'', payload})
+    });
+    return {ok:res.ok, status:res.status};
+  }catch(e){ return {ok:false, reason:e.message}; }
+}
+
+/* ---------- SIGN-IN VIA POWER AUTOMATE (existing SharePoint list) ----------
+   No Azure AD App Registration is needed. The Employee ID + password typed
+   into the form are POSTed to a Power Automate "When an HTTP request is
+   received" flow. That flow (running under its own SharePoint connection)
+   looks the Employee ID up in your existing SharePoint list, checks the
+   password column, and responds with JSON describing the matched user.
+   See Admin ▸ Cloud & security for the exact flow to build. */
+async function loginViaFlow(id,pw){
+  if(!CONFIG.loginFlowUrl){
+    return {success:false,message:'Sign-in is not configured yet. Ask an Admin to set the Power Automate login flow URL under Admin ▸ Cloud & security.'};
+  }
+  let res;
+  try{
+    res=await fetch(CONFIG.loginFlowUrl,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:id, password:pw})
+    });
+  }catch(err){
+    return {success:false,message:'Could not reach the Power Automate sign-in flow: '+(err&&err.message?err.message:'network error')};
+  }
+  if(!res.ok){
+    return {success:false,message:'Sign-in flow returned an error (HTTP '+res.status+').'};
+  }
+  let data;
+  try{ data=await res.json(); }
+  catch(err){ return {success:false,message:'Sign-in flow returned an unexpected response.'}; }
+  return data||{success:false,message:'Sign-in flow returned no data.'};
+}
+/* Normalises whatever field names the flow/SharePoint list happens to use
+   into the user shape the rest of the app expects. */
+function normFlowUser(u){
+  if(!u) return null;
+  return {
+    id:String(u.id||u.EmployeeID||u.Employee_x0020_ID||u.Title||'').toUpperCase(),
+    name:u.name||u.Name||u.EmployeeName||u.Employee_x0020_Name||'',
+    email:String(u.email||u.Email||u.EmailID||u.Email_x0020_ID||'').toLowerCase(),
+    role:normRole(u.role||u.Role||''),
+    branch:u.branch||u.Branch||'Head Office',
+    region:u.region||u.Region||REGION[u.branch||u.Branch]||'West',
+    dept:u.dept||u.Department||'',
+    active:true
+  };
+}
+
+/* ---------- MASTERS ----------
+   Branches and customers are master data too — loaded the same way
+   as users and products (SharePoint copy, cached copy, or manual
+   upload). Only a single "Head Office" fallback ships in the file,
+   so the app has something to boot with before any master is loaded. */
+let BRANCH_MASTER=[{code:'HO',name:'Head Office',state:'',region:'',status:'Active'}];
+let REGION={'Head Office':''};
+let BRANCHES=[];
+let STATES=[];
+function applyBranches(list){
+  const rows=list.filter(r=>(r['Active']||r['Status']||'Yes').toLowerCase()!=='no').map(r=>({
+    code:r['Branch Code']||r['Code']||'', name:r['Branch Name']||r['Branch']||'', state:r['State']||'', region:r['Region']||'', status:'Active'}))
+    .filter(b=>b.name);
+  if(!rows.length) return;
+  BRANCH_MASTER=rows.some(b=>b.name==='Head Office')?rows:rows.concat([{code:'HO',name:'Head Office',state:rows[0].state,region:rows[0].region,status:'Active'}]);
+  REGION=Object.fromEntries(BRANCH_MASTER.map(b=>[b.name,b.region]));
+  BRANCHES=BRANCH_MASTER.filter(b=>b.name!=='Head Office').map(b=>b.name);
+  STATES=[...new Set(BRANCH_MASTER.map(b=>b.state).filter(Boolean))].sort();
+  MASTER_INFO.branches=BRANCH_MASTER.length+' branches';
+}
+
+const VDCS=['—','12','24','48','96','120','180','240','384'];
+const CONDITIONS=['Scrap','Need Repair','Reusable Service Stock'];
+const CLS={'Scrap':'cls-scrap','Need Repair':'cls-repair','Reusable Service Stock':'cls-reuse'};
+let CUSTOMERS=[];
+function applyCustomers(list){
+  const rows=list.filter(r=>(r['Active']||'Yes').toLowerCase()!=='no').map(r=>r['Customer Name']||r['Customer']).filter(Boolean);
+  if(rows.length){ CUSTOMERS=rows; MASTER_INFO.customers=CUSTOMERS.length+' customers'; }
+}
+
+/* ============================================================
+   MASTER DATA — nothing about users or products is hardcoded.
+   Sources, in order of preference:
+     1. SharePoint / repository copy fetched at start-up
+     2. Cached copy in this browser from a previous load
+     3. Manual upload of the Excel masters
+   ============================================================ */
+const MKEY='prostarm.buyback.masters';
+const MASTER_SOURCES=[
+  {k:'users',    paths:['data/Buyback_User_Master.xlsx','data/users.xlsx','Buyback_User_Master.xlsx'], key:'Employee ID'},
+  {k:'products', paths:['data/Buyback_Product_Master.xlsx','data/products.xlsx','Buyback_Product_Master.xlsx'], key:'Product Code'},
+  {k:'branches', paths:['data/Buyback_Branch_Master.xlsx','data/branches.xlsx','Buyback_Branch_Master.xlsx'], key:'Branch Code'},
+  {k:'customers',paths:['data/Buyback_Customer_Master.xlsx','data/customers.xlsx','Buyback_Customer_Master.xlsx'], key:'Customer Name'}
+];
+let USERS=[], PRODUCTS=[], MAKE_LIST=[];
+let MASTER_INFO={users:'not loaded',products:'not loaded',branches:'not loaded',customers:'not loaded'};
+
+function sheetRows(wb,name){
+  const ws=wb.Sheets[name]; if(!ws) return [];
+  return XLSX.utils.sheet_to_json(ws,{header:1,defval:'',blankrows:true});
+}
+function toObjects(rows,keyHeader){
+  const hi=rows.findIndex(r=>r.some(c=>String(c).trim()===keyHeader));
+  if(hi<0) return [];
+  const hdr=rows[hi].map(c=>String(c).trim());
+  const out=[];
+  for(let i=hi+1;i<rows.length;i++){
+    const r=rows[i]; const first=String(r[hdr.indexOf(keyHeader)]||'').trim();
+    if(!first) break;
+    const o={}; hdr.forEach((h,j)=>{ if(h) o[h]=String(r[j]??'').trim(); });
+    out.push(o);
+  }
+  return out;
+}
+function parseCSV(text){
+  const rows=[]; let f='',row=[],q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){f+='"';i++;} else q=false; } else f+=c; }
+    else if(c==='"') q=true;
+    else if(c===','){ row.push(f); f=''; }
+    else if(c==='\n'){ row.push(f); rows.push(row); row=[]; f=''; }
+    else if(c!=='\r') f+=c;
+  }
+  if(f||row.length){ row.push(f); rows.push(row); }
+  return rows;
+}
+function ingest(rows){
+  const u=toObjects(rows,'Employee ID');
+  if(u.length){ applyUsers(u); return 'users'; }
+  const pr=toObjects(rows,'Product Code');
+  if(pr.length){ applyProducts(pr); return 'products'; }
+  const mk=toObjects(rows,'Make Code');
+  if(mk.length){ applyMakes(mk); return 'makes'; }
+  const br=toObjects(rows,'Branch Code');
+  if(br.length){ applyBranches(br); return 'branches'; }
+  const cu=toObjects(rows,'Customer Name');
+  if(cu.length){ applyCustomers(cu); return 'customers'; }
+  return null;
+}
+function applyUsers(list){
+  USERS=list.filter(r=>(r['Active']||'Yes').toLowerCase()!=='no').map(r=>({
+    id:(r['Employee ID']||'').toUpperCase(), name:r['Employee Name']||'', email:(r['Email ID']||'').toLowerCase(),
+    pwd:r['Password']||'', role:normRole(r['Role']), branch:r['Branch']||'Head Office',
+    region:r['Region']||REGION[r['Branch']]||'West', dept:r['Department']||'', active:true}))
+    .filter(u=>u.id);
+  MASTER_INFO.users=USERS.length+' users';
+}
+function normRole(v){
+  const x=String(v||'').toLowerCase();
+  if(x.includes('admin')) return 'Admin';
+  if(x.includes('audit')) return 'Audit';
+  if(x.includes('branch')) return 'Branch';
+  return 'Project';
+}
+function applyProducts(list){
+  PRODUCTS=list.filter(r=>(r['Active']||'Yes').toLowerCase()!=='no').map(r=>({
+    code:r['Product Code'],cat:r['Category'],name:r['Product Name'],cap:r['Capacity']||'—',uom:r['UOM']||'Nos'}))
+    .filter(p=>p.code&&p.name);
+  MASTER_INFO.products=PRODUCTS.length+' products';
+}
+function applyMakes(list){
+  MAKE_LIST=list.filter(r=>(r['Active']||'Yes').toLowerCase()!=='no').map(r=>r['Make Name']).filter(Boolean);
+}
+const catList=()=>{const c=[...new Set(PRODUCTS.map(p=>p.cat))]; return c.length?c:['UPS','Battery','Servo','IT','Battery Cage'];};
+const prodList=cat=>[...new Set(PRODUCTS.filter(p=>p.cat===cat).map(p=>p.name))];
+const capList=(cat,name)=>[...new Set(PRODUCTS.filter(p=>p.cat===cat&&p.name===name).map(p=>p.cap))];
+const uomOf=(cat,name,cap)=>{const p=PRODUCTS.find(x=>x.cat===cat&&x.name===name&&x.cap===cap);return p?p.uom:'Nos';};
+const makeList=()=>MAKE_LIST.length?MAKE_LIST:['Prostarm','Exide','Quanta','Other'];
+
+async function readFileAsWorkbook(file){
+  const name=file.name.toLowerCase();
+  if(name.endsWith('.json')){
+    const j=JSON.parse(await file.text());
+    if(j.users) applyUsers(j.users); if(j.products) applyProducts(j.products); if(j.makes) applyMakes(j.makes);
+    return 'json';
+  }
+  if(name.endsWith('.csv')){ return ingest(parseCSV(await file.text())); }
+  if(typeof XLSX==='undefined') throw new Error('Excel parsing needs the SheetJS library, which could not load offline. Save the sheet as CSV and upload that instead.');
+  const wb=XLSX.read(new Uint8Array(await file.arrayBuffer()),{type:'array'});
+  let hit=null;
+  wb.SheetNames.forEach(n=>{ const r=ingest(sheetRows(wb,n)); if(r) hit=hit||r; });
+  return hit;
+}
+async function fetchMasters(){
+  if(typeof XLSX==='undefined') return false;
+  let any=false;
+  for(const src of MASTER_SOURCES){
+    for(const path of src.paths){
+      try{
+        const res=await fetch(path); if(!res.ok) continue;
+        const wb=XLSX.read(new Uint8Array(await res.arrayBuffer()),{type:'array'});
+        wb.SheetNames.forEach(n=>ingest(sheetRows(wb,n)));
+        any=true; break;
+      }catch(e){}
+    }
+  }
+  return any;
+}
+function cacheMasters(){ idbSet(MKEY,{users:USERS,products:PRODUCTS,makes:MAKE_LIST,branches:BRANCH_MASTER,customers:CUSTOMERS}); }
+async function restoreMasters(){
+  try{ const r=await idbGet(MKEY); if(!r||!r.users||!r.users.length) return false;
+    USERS=r.users; PRODUCTS=r.products||[]; MAKE_LIST=r.makes||[];
+    if(r.branches&&r.branches.length) BRANCH_MASTER=r.branches;
+    REGION=Object.fromEntries(BRANCH_MASTER.map(b=>[b.name,b.region]));
+    BRANCHES=BRANCH_MASTER.filter(b=>b.name!=='Head Office').map(b=>b.name);
+    STATES=[...new Set(BRANCH_MASTER.map(b=>b.state).filter(Boolean))].sort();
+    if(r.customers&&r.customers.length) CUSTOMERS=r.customers;
+    MASTER_INFO={users:USERS.length+' users (cached)',products:PRODUCTS.length+' products (cached)',
+      branches:BRANCH_MASTER.length+' branches (cached)',customers:CUSTOMERS.length+' customers (cached)'};
+    return true;
+  }catch(e){ return false; }
+}
+/* ---------- MASTER DATA — SHARED VIA POWER AUTOMATE ----------
+   Excel upload and the browser's IndexedDB cache are per-device only,
+   so a second person opening the portal on their own machine never
+   saw what an Admin uploaded elsewhere. These two functions push the
+   parsed master data to a small Power Automate flow after every
+   admin upload, and pull it back down for everyone else at boot —
+   so "upload once" really means once. See Admin ▸ Cloud & security
+   for the exact flow to build. */
+async function syncMastersToCloud(){
+  if(!CONFIG.masterFlowUrl) return {ok:false,reason:'not-configured'};
+  try{
+    const res=await fetch(CONFIG.masterFlowUrl,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mode:'save', by:ME?ME.id:'', ts:stamp(),
+        users:USERS, products:PRODUCTS, makes:MAKE_LIST, branches:BRANCH_MASTER, customers:CUSTOMERS})
+    });
+    return {ok:res.ok, status:res.status};
+  }catch(e){ return {ok:false, reason:e.message}; }
+}
+async function fetchMastersFromCloud(){
+  if(!CONFIG.masterFlowUrl) return false;
+  try{
+    const res=await fetch(CONFIG.masterFlowUrl,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mode:'fetch'})
+    });
+    if(!res.ok) return false;
+    const r=await res.json();
+    const d=r&&r.data;
+    if(!d||!d.users||!d.users.length) return false;
+    USERS=d.users; PRODUCTS=d.products||[]; MAKE_LIST=d.makes||[];
+    if(d.branches&&d.branches.length) BRANCH_MASTER=d.branches;
+    REGION=Object.fromEntries(BRANCH_MASTER.map(b=>[b.name,b.region]));
+    BRANCHES=BRANCH_MASTER.filter(b=>b.name!=='Head Office').map(b=>b.name);
+    STATES=[...new Set(BRANCH_MASTER.map(b=>b.state).filter(Boolean))].sort();
+    if(d.customers&&d.customers.length) CUSTOMERS=d.customers;
+    MASTER_INFO={users:USERS.length+' users (from SharePoint)',products:PRODUCTS.length+' products (from SharePoint)',
+      branches:BRANCH_MASTER.length+' branches (from SharePoint)',customers:CUSTOMERS.length+' customers (from SharePoint)'};
+    return true;
+  }catch(e){ return false; }
+}
+function masterBanner(){
+  const el=document.getElementById('masterState'); if(!el) return;
+  if(!USERS.length){
+    el.innerHTML='Sign in with your employee ID — credentials are checked against SharePoint via Power Automate. Product, branch and customer master data will load automatically once an Admin has uploaded it.';
+  } else {
+    el.innerHTML=`Master data loaded — <b>${MASTER_INFO.users}</b>, <b>${MASTER_INFO.products}</b>, <b>${makeList().length} makes</b>, <b>${MASTER_INFO.branches}</b>, <b>${MASTER_INFO.customers}</b>. Sign in with your employee ID — credentials are checked against SharePoint via Power Automate.`;
+  }
+  const dl=document.getElementById('uids');
+  if(dl) dl.innerHTML=USERS.map(u=>`<option value="${u.id}">${esc(u.name)} · ${ROLE_LABEL[u.role]}</option>`).join('');
+}
+async function boot(){
+  await loadConfig();
+  const fromCloud=await fetchMastersFromCloud();
+  if(!fromCloud){
+    const ok=await fetchMasters();
+    if(!ok||!USERS.length) await restoreMasters();
+  }
+  if(USERS.length) cacheMasters();
+  DB=await load();
+  masterBanner();
+  armIdleTimer();
+}
+const ROLE_LABEL={Project:'Project team',Branch:'Branch team',Audit:'HO audit team',Admin:'Administrator'};
+
+/* ---------- STATUS ---------- */
+const STAGES=['Draft','Submitted','Material receipt','Inventory available','HO audit','Closure'];
+const STAGE_OF={'Draft':0,'Submitted':1,'Action Required':1,'Partially Received':2,'Fully Received':3,'Pending Audit':4,'Audit Rejected':2,'Verified':5,'Closed':5};
+const TAGC={'Draft':'t-grey','Submitted':'t-blue','Action Required':'t-amber','Partially Received':'t-amber','Fully Received':'t-blue','Pending Audit':'t-amber','Audit Rejected':'t-red','Verified':'t-teal','Closed':'t-teal'};
+const BRANCH_ACTION=['Action Required','Partially Received','Audit Rejected'];
+
+/* ============================================================
+   EMPTY DATABASE
+   No demo/sample records ship in this file. A brand new install
+   starts with a genuinely empty database — every provision,
+   receipt and audit record here was created by a real user action
+   or imported from your own systems.
+   ============================================================ */
+function emptyDB(){
+  return {v:5, provisions:[], additional:[], meta:{}, seq:1, notif:[], transfers:[]};
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let DB=null, ME=null, PAGE='dash', OPEN=null, FILTER={}, TAB={};
+async function load(){ try{const r=await idbGet(KEY); if(r) return r;}catch(e){} return emptyDB(); }
+function save(){ idbSet(KEY,DB); syncToCloud('buyback-db-snapshot',DB); }
+function resetAll(){ DB=emptyDB(); save(); render(); toast('Data cleared','All records removed from this browser. This does not affect anything already synced to SharePoint.'); }
+
+const provQty=p=>p.items.reduce((s,i)=>s+ +i.qty,0);
+const itemRecv=i=>(i.receipts||[]).reduce((s,r)=>s+ +r.qty,0);
+const balance=i=>Math.max(0,+i.qty-itemRecv(i));
+const recvQty=p=>p.items.reduce((s,i)=>s+itemRecv(i),0);
+const condQty=(p,c)=>p.items.reduce((s,i)=>s+(i.receipts||[]).filter(r=>r.cond===c).reduce((a,r)=>a+ +r.qty,0),0);
+const varQty=p=>provQty(p)-recvQty(p);
+const varPct=p=>provQty(p)?(varQty(p)/provQty(p)*100):0;
+const varColor=v=>v<=5?'var(--teal)':v<=15?'var(--amber)':'var(--red)';
+const lastRecvDate=p=>p.items.flatMap(i=>(i.receipts||[]).map(r=>r.date)).filter(Boolean).sort().pop()||null;
+const overdue=p=>BRANCH_ACTION.includes(p.status)&&p.expDate&&days(p.expDate)>0;
+const byId=id=>DB.provisions.find(p=>p.id===id);
+const userName=id=>{const u=USERS.find(x=>x.id===id); return u?u.name:(id||'—');};
+function itemDesc(i){
+  if(!i) return '';
+  const cap=(i.cap&&i.cap!=='—')?i.cap+' ':'';
+  const mk=(i.make&&i.make!=='—')?' — '+i.make:'';
+  return cap+(i.product||i.cat)+mk;
+}
+const addlDesc=a=>itemDesc({cat:a.cat,product:a.product,cap:a.cap,make:a.make});
+
+/* row-level security */
+function visible(){
+  if(!ME) return [];
+  const all=DB.provisions;
+  if(ME.role==='Branch') return all.filter(p=>p.branch===ME.branch&&p.status!=='Draft');
+  if(ME.role==='Project') return all.filter(p=>p.pmId===ME.id);
+  return all;
+}
+function visibleAdditional(){
+  if(!ME) return [];
+  return ME.role==='Branch'?DB.additional.filter(a=>a.branch===ME.branch):DB.additional;
+}
+
+/* ---------- inventory stock rows (provision receipts + additional) ---------- */
+function stockRows(){
+  const rows=[];
+  visible().forEach(p=>p.items.forEach(i=>(i.receipts||[]).forEach(r=>{ if(+r.qty>0)
+    rows.push({rid:p.id+':'+i.id+':'+r.id,branch:p.branch,region:p.region,cat:i.cat,desc:itemDesc(i),qty:+r.qty,
+      cond:r.cond,loc:r.loc,rack:r.rack,src:p.id,cust:p.customer,addl:false,date:r.date,status:p.status});})));
+  visibleAdditional().forEach(a=>rows.push({rid:'ADD:'+a.id,branch:a.branch,region:REGION[a.branch],cat:a.cat,desc:addlDesc(a),qty:+a.qty,
+    cond:a.cond,loc:a.loc,rack:'',src:'Additional',cust:a.cust||'—',addl:true,date:a.date,status:'Inventory available'}));
+  return rows;
+}
+const meta=rid=>DB.meta[rid]||(DB.meta[rid]={});
+function notify(to,subject,body,pid){ DB.notif.unshift({id:uid('NT'),t:stamp(),to,subject,body,pid}); DB.notif=DB.notif.slice(0,150); }
+const logEvent=(p,txt)=>p.log.push({t:stamp(),by:ME.id,txt});
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+document.getElementById('loginBtn').onclick=doLogin;
+document.getElementById('pwd').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('uid').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('pwd').focus();});
+let LOGIN_ATTEMPTS=0, LOGIN_LOCK_UNTIL=0, LOGIN_BUSY=false;
+async function doLogin(){
+  const e=document.getElementById('loginErr'), btn=document.getElementById('loginBtn');
+  if(Date.now()<LOGIN_LOCK_UNTIL){ e.textContent='Too many failed attempts. Try again in '+Math.ceil((LOGIN_LOCK_UNTIL-Date.now())/1000)+'s.'; return; }
+  if(LOGIN_BUSY) return;
+  const id=document.getElementById('uid').value.trim().toUpperCase(), pw=document.getElementById('pwd').value;
+  if(!id||!pw){ e.textContent='Enter your Employee ID and password.'; return; }
+  LOGIN_BUSY=true; btn.disabled=true; e.textContent='Checking with SharePoint…';
+  const r=await loginViaFlow(id,pw);
+  LOGIN_BUSY=false; btn.disabled=false;
+  const u=normFlowUser(r.user);
+  if(!r.success||!u||!u.id){
+    LOGIN_ATTEMPTS++;
+    if(LOGIN_ATTEMPTS>=CONFIG.maxLoginAttempts){ LOGIN_LOCK_UNTIL=Date.now()+60000; LOGIN_ATTEMPTS=0; e.textContent='Too many failed attempts. Sign-in locked for 60s.'; return; }
+    e.textContent=r.message||'Employee ID or password is incorrect.';
+    return;
+  }
+  LOGIN_ATTEMPTS=0; e.textContent=''; document.getElementById('pwd').value='';
+  completeLogin(u);
+}
+function completeLogin(u){
+  ME=u; PAGE=u.role==='Branch'?'action':'dash'; OPEN=null;
+  document.getElementById('login').style.display='none';
+  document.getElementById('shell').style.display='grid';
+  render(); armIdleTimer();
+  toast('Signed in as '+u.name, ROLE_LABEL[u.role]+' · '+u.branch+(u.role!=='Admin'?' — the "Masters & administration" menu only shows for Admin accounts.':''));
+}
+function logout(){
+  ME=null; OPEN=null; document.getElementById('shell').style.display='none'; document.getElementById('login').style.display='grid';
+  document.getElementById('pwd').value=''; masterBanner(); clearIdleTimer();
+}
+/* ---------- idle session timeout ---------- */
+let _idleTimer=null;
+function armIdleTimer(){
+  clearIdleTimer();
+  const mins=CONFIG.sessionTimeoutMin||20;
+  _idleTimer=setTimeout(()=>{ if(ME){ toast('Signed out','No activity for '+mins+' minutes.'); logout(); } }, mins*60000);
+}
+function clearIdleTimer(){ if(_idleTimer) clearTimeout(_idleTimer); _idleTimer=null; }
+['click','keydown','mousemove'].forEach(ev=>document.addEventListener(ev,()=>{ if(ME) armIdleTimer(); },{passive:true}));
+
+/* ============================================================
+   NAV
+   ============================================================ */
+const PAGES={
+  dash:{t:'Executive dashboard',roles:['Project','Branch','Audit','Admin']},
+  action:{t:'Action required',roles:['Branch','Admin']},
+  prov:{t:'Buyback provisions',roles:['Project','Audit','Admin']},
+  addl:{t:'Additional material',roles:['Branch','Audit','Admin']},
+  inv:{t:'Branch inventory',roles:['Branch','Audit','Admin']},
+  audit:{t:'HO audit',roles:['Audit','Admin']},
+  repair:{t:'Repair queue',roles:['Branch','Audit','Admin']},
+  reuse:{t:'Reusable material',roles:['Branch','Audit','Admin']},
+  scrap:{t:'Scrap management',roles:['Branch','Audit','Admin']},
+  rep:{t:'Reports',roles:['Audit','Admin','Project']},
+  act:{t:'Notifications & activity',roles:['Project','Branch','Audit','Admin']},
+  admin:{t:'Masters & administration',roles:['Admin']}
+};
+function counts(){
+  const v=visible(), s=stockRows();
+  return {action:v.filter(p=>BRANCH_ACTION.includes(p.status)).length,
+    audit:v.filter(p=>p.status==='Pending Audit').length,
+    repair:s.filter(r=>r.cond==='Need Repair'&&(meta(r.rid).repair||{}).status!=='Repaired').length,
+    scrap:s.filter(r=>r.cond==='Scrap'&&((meta(r.rid).scrap||{}).status||'Pending')!=='Closed').length,
+    reuse:s.filter(r=>r.cond==='Reusable Service Stock'&&(meta(r.rid).transfer||{}).status!=='Transferred').length,
+    prov:v.length,addl:visibleAdditional().length};
+}
+function drawNav(){
+  const c=counts();
+  document.getElementById('nav').innerHTML=Object.entries(PAGES).filter(([k,p])=>p.roles.includes(ME.role))
+    .map(([k,p])=>`<a class="${k===PAGE?'on':''}" onclick="go('${k}')" tabindex="0" onkeydown="if(event.key==='Enter')go('${k}')">${p.t}${c[k]?`<span class="pill">${c[k]}</span>`:''}</a>`).join('');
+  document.getElementById('railMe').innerHTML=`<b>${esc(ME.name)}</b><span>${ROLE_LABEL[ME.role]} · ${esc(ME.branch)}</span><button onclick="logout()">Sign out</button>`;
+}
+function go(p){ PAGE=p; OPEN=null; document.getElementById('rail').classList.remove('open'); render(); window.scrollTo(0,0); }
+document.getElementById('burger').onclick=()=>document.getElementById('rail').classList.toggle('open');
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  if(!ME) return;
+  drawNav();
+  document.getElementById('pgScope').textContent=ME.role==='Branch'?`Branch security — ${ME.branch} only`:ME.role==='Project'?'Provisions you raised':'All branches · all regions';
+  document.getElementById('pgActions').innerHTML='';
+  const v=document.getElementById('view');
+  if(OPEN){ document.getElementById('pgTitle').textContent=OPEN; v.innerHTML=viewProvision(OPEN); return; }
+  document.getElementById('pgTitle').textContent=PAGES[PAGE].t;
+  v.innerHTML=({dash:viewDash,action:viewAction,prov:viewProvList,addl:viewAdditional,inv:viewInventory,audit:viewAudit,
+    repair:viewRepair,reuse:viewReuse,scrap:viewScrap,rep:viewReports,act:viewActivity,admin:viewAdmin}[PAGE]||viewDash)();
+}
+function openRec(id){ OPEN=id; render(); window.scrollTo(0,0); }
+function back(){ OPEN=null; render(); }
+const kpi=(label,val,sub,cls)=>`<div class="kpi ${cls||''}"><span>${label}</span><b>${val}</b>${sub?`<small>${sub}</small>`:''}</div>`;
+const tag=s=>`<span class="tag ${TAGC[s]||'t-grey'}">${s}</span>`;
+const clsTag=c=>`<span class="cls ${CLS[c]||'t-grey'}">${c}</span>`;
+function lifecycle(p){
+  const cur=STAGE_OF[p.status]??0, rej=p.status==='Audit Rejected';
+  return `<ul class="life">${STAGES.map((s,i)=>`<li class="${i<cur?'done':i===cur?(rej?'rej':'now'):''}"><i>${i<cur?'✓':i+1}</i><span>${s}</span></li>`).join('')}</ul>`;
+}
+const emptyBox=t=>`<div class="empty">${t}</div>`;
+
+/* ============================================================
+   ACTION REQUIRED (branch)
+   ============================================================ */
+function actionStrip(){
+  const q=visible().filter(p=>BRANCH_ACTION.includes(p.status)).sort((a,b)=>(a.expDate||'9999').localeCompare(b.expDate||'9999'));
+  if(!q.length) return `<div class="panel"><div class="empty"><b>Nothing pending</b>No provision is waiting on branch action.</div></div>`;
+  return `<div class="act-strip">${q.map(p=>{
+    const late=overdue(p), d=p.expDate?days(p.expDate):null;
+    return `<div class="act ${late?'late':''}">
+      <div class="who"><b>${p.id} · ${esc(p.customer)}</b>
+        <small>UID ${esc(p.uidNo)} · PO ${esc(p.po)} · ${esc(p.location)}, ${esc(p.state)}</small>
+        <small>${N(provQty(p))} units provisioned${recvQty(p)?` · ${N(recvQty(p))} received`:' · nothing received yet'}</small></div>
+      <div class="due">${tag(p.status)}<b style="margin-top:5px">${p.expDate?(late?`${d} day${d>1?'s':''} overdue`:`Due ${fmtD(p.expDate)}`):'No due date'}</b></div>
+      <button class="btn sm" onclick="openRec('${p.id}')">Record receipt</button></div>`;}).join('')}</div>`;
+}
+function viewAction(){
+  document.getElementById('pgActions').innerHTML=`<button class="btn amber sm" onclick="newAdditional()">➕ Additional material</button>`;
+  return `<div class="banner"><b>Material receipt is a branch responsibility</b>
+    <p>When the project team submits a provision it lands here. Record the quantity received against each line, set the material condition, and the system routes every unit to the scrap, repair or reusable queue automatically.</p>
+    <div class="flowbox" style="margin-top:10px"><span>Submitted</span><i>→</i><span>Action required</span><i>→</i><span>Material receipt</span><i>→</i><span>Inventory available</span><i>→</i><span>HO audit</span><i>→</i><span>Classification</span><i>→</i><span>Closure</span></div></div>`
+   +actionStrip()+`<div class="section-h">All provisions at this branch</div>`+provTable(visible());
+}
+
+/* ============================================================
+   EXECUTIVE DASHBOARD
+   ============================================================ */
+function viewDash(){
+  const v=visible(), s=stockRows();
+  const tp=v.reduce((a,p)=>a+provQty(p),0), tr=v.reduce((a,p)=>a+recvQty(p),0);
+  const addlU=visibleAdditional().reduce((a,x)=>a+ +x.qty,0);
+  const scrapU=s.filter(r=>r.cond==='Scrap').reduce((a,r)=>a+r.qty,0);
+  const reuseU=s.filter(r=>r.cond==='Reusable Service Stock').reduce((a,r)=>a+r.qty,0);
+  const repairU=s.filter(r=>r.cond==='Need Repair').reduce((a,r)=>a+r.qty,0);
+  const vpct=tp?((tp-tr)/tp*100):0;
+  const branchAgg={}; s.forEach(r=>branchAgg[r.branch]=(branchAgg[r.branch]||0)+r.qty);
+  const catAgg={}; s.forEach(r=>catAgg[r.cat]=(catAgg[r.cat]||0)+r.qty);
+  const mth={}; v.forEach(p=>{const d=lastRecvDate(p); if(!d)return; const m=d.slice(0,7); mth[m]=(mth[m]||0)+recvQty(p);});
+  DB.additional.forEach(a=>{const m=a.date.slice(0,7); mth[m]=(mth[m]||0)+ +a.qty;});
+  const months=Object.keys(mth).sort().slice(-6).map(m=>({k:m.slice(5)+'/'+m.slice(2,4),v:mth[m]}));
+  const sr={}; s.forEach(r=>{const b=sr[r.branch]=sr[r.branch]||{s:0,r:0,p:0};
+    if(r.cond==='Scrap')b.s+=r.qty; else if(r.cond==='Reusable Service Stock')b.r+=r.qty; else b.p+=r.qty;});
+  const stack=Object.entries(sr).map(([k,x])=>({k,parts:[x.s,x.p,x.r]}));
+
+  return `
+  <div class="kpis">
+    ${kpi('Total provisions',v.length,`${new Set(v.map(p=>p.branch)).size} branches`)}
+    ${kpi('Quantity provisioned',N(tp),N(v.reduce((a,p)=>a+p.items.length,0))+' line items','k-sky')}
+    ${kpi('Total received',N(tr),tp?((tr/tp)*100).toFixed(0)+'% of provision':'—','k-teal')}
+    ${kpi('Additional inventory',N(addlU),visibleAdditional().length+' entries, not provision linked','k-amber')}
+  </div>
+  <div class="kpis" style="margin-top:12px">
+    ${kpi('Scrap inventory',N(scrapU),'Awaiting disposal','k-red')}
+    ${kpi('Reusable inventory',N(reuseU),'Service stock','k-teal')}
+    ${kpi('Repair queue',N(repairU),'Need repair','k-amber')}
+    ${kpi('Variance',vpct.toFixed(1)+'%',`${N(tp-tr)} units short`,'k-'+(vpct<=5?'teal':vpct<=15?'amber':'red'))}
+  </div>
+
+  <div class="rowsplit" style="margin-top:18px">
+    <div class="panel"><header><div><h3>Branch wise inventory</h3><p>Units on hand, provision plus additional</p></div></header>
+      <div class="pad">${barChart(Object.entries(branchAgg).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v))}</div></div>
+    <div class="panel"><header><div><h3>Category wise inventory</h3><p>Units by material category</p></div></header>
+      <div class="pad">${donut(Object.entries(catAgg).map(([k,v])=>({k,v})))}</div></div>
+  </div>
+
+  <div class="rowsplit" style="margin-top:14px">
+    <div class="panel"><header><div><h3>Monthly collection trend</h3><p>Units received by month</p></div></header>
+      <div class="pad">${line(months)}</div></div>
+    <div class="panel"><header><div><h3>Scrap vs repair vs reusable</h3><p>Units by branch</p></div></header>
+      <div class="pad">${stacked(stack)}
+      <div class="legend"><span><i style="background:var(--red)"></i>Scrap</span><span><i style="background:var(--amber)"></i>Need repair</span><span><i style="background:var(--teal)"></i>Reusable</span></div></div></div>
+  </div>
+
+  <div class="section-h">Variance analysis</div>
+  <div class="panel"><div class="tbl-scroll"><table class="matrix">
+   <thead><tr><th>Branch</th><th class="num">Provisions</th><th class="num">Provisioned</th><th class="num">Received</th><th class="num">Variance</th><th class="num">Variance %</th><th>Band</th></tr></thead>
+   <tbody>${(()=>{const m={};v.forEach(p=>{const x=m[p.branch]=m[p.branch]||{n:0,p:0,r:0};x.n++;x.p+=provQty(p);x.r+=recvQty(p);});
+     const rows=Object.entries(m).map(([k,x])=>({k,...x,pc:x.p?((x.p-x.r)/x.p*100):0})).sort((a,b)=>b.pc-a.pc);
+     return rows.length?rows.map(r=>`<tr><td class="hl">${esc(r.k)}</td><td class="num">${r.n}</td><td class="num">${N(r.p)}</td><td class="num">${N(r.r)}</td>
+      <td class="num">${N(r.p-r.r)}</td><td class="num" style="color:${varColor(r.pc)};font-weight:600">${r.pc.toFixed(1)}%</td>
+      <td><span class="dot" style="background:${varColor(r.pc)}"></span>${r.pc<=5?'Verified band':r.pc<=15?'Review':'Investigate'}</td></tr>`).join('')
+      :'<tr><td colspan="7"><div class="empty">No data in scope</div></td></tr>';})()}</tbody></table></div></div>`;
+}
+
+/* ---------- charts ---------- */
+function barChart(d){
+  if(!d.length) return emptyBox('No inventory recorded yet');
+  const mx=Math.max(...d.map(x=>x.v),1);
+  return `<table><tbody>${d.map(x=>`<tr><td style="white-space:nowrap">${esc(x.k)}</td><td class="num" style="font-weight:600">${N(x.v)}</td>
+   <td style="width:60%"><div class="bar"><i style="width:${x.v/mx*100}%"></i></div></td></tr>`).join('')}</tbody></table>`;
+}
+function donut(d){
+  d=d.filter(x=>x.v>0); if(!d.length) return emptyBox('No inventory recorded yet');
+  const tot=d.reduce((s,x)=>s+x.v,0), C=['#1e5fa8','#00a896','#29a9e0','#d98b0b','#8e6fd8','#e8112d'];
+  let a=-Math.PI/2, R=72, cx=90, cy=92, out='';
+  d.forEach((x,i)=>{const ang=x.v/tot*Math.PI*2,e=a+ang;
+    const p=[cx+R*Math.cos(a),cy+R*Math.sin(a),cx+R*Math.cos(e),cy+R*Math.sin(e)];
+    out+=`<path d="M${cx},${cy} L${p[0].toFixed(1)},${p[1].toFixed(1)} A${R},${R} 0 ${ang>Math.PI?1:0} 1 ${p[2].toFixed(1)},${p[3].toFixed(1)} Z" fill="${C[i%6]}" stroke="var(--panel)" stroke-width="1.5"/>`;a=e;});
+  out+=`<circle cx="${cx}" cy="${cy}" r="44" fill="var(--panel)"/><text x="${cx}" y="${cy-2}" text-anchor="middle" font-size="17" font-weight="700" fill="var(--ink)" font-family="Archivo">${N(tot)}</text><text x="${cx}" y="${cy+14}" text-anchor="middle" font-size="9.5" fill="var(--muted)">units</text>`;
+  return `<svg class="chart" viewBox="0 0 190 186" style="max-width:220px;margin:0 auto">${out}</svg>
+   <div class="legend">${d.map((x,i)=>`<span><i style="background:${C[i%6]}"></i>${esc(x.k)} · ${N(x.v)}</span>`).join('')}</div>`;
+}
+function line(d){
+  if(d.length<2) return emptyBox('Needs at least two months of receipts');
+  const W=520,H=200,pl=44,pb=26,pt=12,max=Math.max(...d.map(x=>x.v),1)*1.2;
+  const x=i=>pl+i*((W-pl-10)/(d.length-1)), y=v=>H-pb-(v/max)*(H-pb-pt);
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Monthly trend">
+   ${[0,.5,1].map(f=>`<line x1="${pl}" x2="${W-6}" y1="${y(max*f)}" y2="${y(max*f)}" stroke="var(--line)"/><text x="${pl-6}" y="${y(max*f)+4}" text-anchor="end" font-size="9.5" fill="var(--muted)">${Math.round(max*f)}</text>`).join('')}
+   <polyline points="${d.map((p,i)=>`${x(i)},${y(p.v)}`).join(' ')}" fill="none" stroke="var(--blue)" stroke-width="2.2" stroke-linejoin="round"/>
+   ${d.map((p,i)=>`<circle cx="${x(i)}" cy="${y(p.v)}" r="3.4" fill="var(--panel)" stroke="var(--blue)" stroke-width="2"/><text x="${x(i)}" y="${H-8}" text-anchor="middle" font-size="9.5" fill="var(--muted)">${p.k}</text>`).join('')}
+  </svg>`;
+}
+function stacked(d){
+  if(!d.length) return emptyBox('No classified inventory yet');
+  const W=540,H=220,pl=44,pb=30,pt=10;
+  const tot=d.map(x=>x.parts.reduce((a,b)=>a+b,0)), max=Math.max(...tot,1)*1.12;
+  const bw=(W-pl-10)/d.length, C=['var(--red)','var(--amber)','var(--teal)'];
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Scrap versus repair versus reusable">
+   ${[0,.5,1].map(f=>`<line x1="${pl}" x2="${W-4}" y1="${H-pb-(f*(H-pb-pt))}" y2="${H-pb-(f*(H-pb-pt))}" stroke="var(--line)"/><text x="${pl-6}" y="${H-pb-(f*(H-pb-pt))+4}" text-anchor="end" font-size="9.5" fill="var(--muted)">${Math.round(max*f)}</text>`).join('')}
+   ${d.map((x,i)=>{let acc=0;const cx=pl+i*bw+bw*0.22,w=bw*0.56;
+     const segs=x.parts.map((p,j)=>{const h=(p/max)*(H-pb-pt),yy=H-pb-acc-h;acc+=h;
+       return p>0?`<rect x="${cx}" y="${yy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" fill="${C[j]}"/>`:'';}).join('');
+     return segs+`<text x="${cx+w/2}" y="${H-12}" text-anchor="middle" font-size="9" fill="var(--muted)">${esc(x.k.split('-')[0])}</text>`;}).join('')}
+  </svg>`;
+}
+
+/* ============================================================
+   PROVISIONS
+   ============================================================ */
+function provTable(list){
+  if(!list.length) return `<div class="panel"><div class="empty"><b>No provisions</b>Nothing matches the current scope or filter.</div></div>`;
+  return `<div class="panel"><div class="tbl-scroll"><table>
+   <thead><tr><th>Provision / UID</th><th>Customer / project</th><th>PO</th><th>Branch</th><th class="num">Provisioned</th><th class="num">Received</th><th class="num">Variance</th><th>Status</th></tr></thead>
+   <tbody>${list.map(p=>`<tr class="clickrow" onclick="openRec('${p.id}')">
+     <td><b>${p.id}</b><small>UID ${esc(p.uidNo)}${overdue(p)?' · <span style="color:var(--red);font-weight:600">overdue</span>':''}</small></td>
+     <td><b>${esc(p.customer)}</b><small>${esc(p.projectName)}</small></td>
+     <td><small>${esc(p.po)}<br>${fmtD(p.poDate)}</small></td>
+     <td>${esc(p.branch)}<small>${p.region}</small></td>
+     <td class="num">${N(provQty(p))}<small>${p.items.length} lines</small></td>
+     <td class="num">${N(recvQty(p))}</td>
+     <td class="num" style="color:${recvQty(p)?varColor(varPct(p)):'var(--muted)'};font-weight:600">${recvQty(p)?varPct(p).toFixed(1)+'%':'—'}</td>
+     <td>${tag(p.status)}</td></tr>`).join('')}</tbody></table></div></div>`;
+}
+function filterBar(list){
+  const b=[...new Set(list.map(p=>p.branch))].sort(), s=[...new Set(list.map(p=>p.status))];
+  return `<div class="toolbar">
+   <input class="inp" id="fq" placeholder="Search provision, UID, customer, PO" value="${esc(FILTER.q||'')}" oninput="FILTER.q=this.value;render();setTimeout(()=>{const e=document.getElementById('fq');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length)}},0)">
+   <select class="inp" onchange="FILTER.b=this.value;render()"><option value="">All branches</option>${b.map(x=>`<option ${FILTER.b===x?'selected':''}>${x}</option>`).join('')}</select>
+   <select class="inp" onchange="FILTER.s=this.value;render()"><option value="">All statuses</option>${s.map(x=>`<option ${FILTER.s===x?'selected':''}>${x}</option>`).join('')}</select>
+   <button class="btn ghost sm" onclick="FILTER={};render()">Clear</button><span style="flex:1"></span>
+   <button class="btn ghost sm" onclick="exportProv()">Export CSV</button></div>`;
+}
+function applyFilter(list){
+  return list.filter(p=>{
+    if(FILTER.b&&p.branch!==FILTER.b) return false;
+    if(FILTER.s&&p.status!==FILTER.s) return false;
+    if(FILTER.q){const q=FILTER.q.toLowerCase(); if(!(p.id+p.uidNo+p.customer+p.po+p.projectName+p.location).toLowerCase().includes(q)) return false;}
+    return true;});
+}
+function viewProvList(){
+  if(['Project','Admin'].includes(ME.role))
+    document.getElementById('pgActions').innerHTML=`<button class="btn" onclick="newProvision()">New provision</button>`;
+  return filterBar(visible())+provTable(applyFilter(visible()));
+}
+function viewAudit(){
+  const q=visible().filter(p=>p.status==='Pending Audit');
+  const rej=visible().filter(p=>p.status==='Audit Rejected');
+  const done=visible().filter(p=>['Verified','Closed'].includes(p.status));
+  return `<div class="section-h">Pending physical verification</div>${provTable(q)}
+   <div class="section-h">Rejected — rework at branch</div>${provTable(rej)}
+   <div class="section-h">Verified</div>${provTable(done)}`;
+}
+
+/* ============================================================
+   PROVISION DETAIL
+   ============================================================ */
+function viewProvision(id){
+  const p=byId(id); if(!p) return emptyBox('Provision not found');
+  const canReceive=(ME.role==='Branch'&&p.branch===ME.branch||ME.role==='Admin')&&BRANCH_ACTION.includes(p.status);
+  const canAudit=(ME.role==='Audit'||ME.role==='Admin')&&['Pending Audit'].includes(p.status);
+  const canEdit=(ME.role==='Project'&&p.pmId===ME.id||ME.role==='Admin')&&p.status==='Draft';
+  const canClose=(ME.role==='Audit'||ME.role==='Admin')&&p.status==='Verified';
+
+  document.getElementById('pgActions').innerHTML=
+    `<button class="btn ghost sm" onclick="back()">Back</button>`+
+    (canEdit?`<button class="btn ghost sm" onclick="addLine('${p.id}')">Add line item</button><button class="btn teal sm" onclick="submitProvision('${p.id}')">Submit to branch</button>`:'')+
+    (canReceive?`<button class="btn amber sm" onclick="newAdditional()">➕ Additional material</button><button class="btn teal sm" onclick="closeReceipt('${p.id}')">Send to HO audit</button>`:'')+
+    (canAudit?`<button class="btn sm" onclick="auditForm('${p.id}')">Record audit</button>`:'')+
+    (canClose?`<button class="btn teal sm" onclick="closeCase('${p.id}')">Close case</button>`:'')+
+    (p.audit?`<button class="btn ghost sm" onclick="printAudit('${p.id}')">Audit report PDF</button>`:'');
+
+  const vp=varPct(p);
+  return `
+  ${canReceive?`<div class="banner" style="border-left-color:${overdue(p)?'var(--red)':'var(--amber)'}"><b>${overdue(p)?'Overdue — material receipt pending':'Action required at your branch'}</b>
+    <p>Add one receipt entry per condition against each line. A provision of 8 can be received as 4 Scrap, 3 Reusable and 1 Need Repair — or left with a balance. Condition routes each entry: Scrap to the disposal queue, Need Repair to the repair queue, Reusable Service Stock to the reuse queue.</p></div>`:''}
+
+  <div class="panel"><div class="pad">${lifecycle(p)}</div></div>
+
+  <div class="panel" style="margin-top:14px"><header><div><h3>${esc(p.customer)}</h3><p>${p.id} · UID ${esc(p.uidNo)} · ${esc(p.projectName)}</p></div>${tag(p.status)}</header>
+   <div class="pad"><div class="meta">
+    <div><span>UID number</span><b>${esc(p.uidNo)}</b></div>
+    <div><span>PO number</span><b>${esc(p.po)}</b></div>
+    <div><span>PO date</span><b>${fmtD(p.poDate)}</b></div>
+    <div><span>Project ID</span><b>${esc(p.projectId)}</b></div>
+    <div><span>Project manager</span><b>${esc(p.pm)}</b></div>
+    <div><span>Location</span><b>${esc(p.location)}</b></div>
+    <div><span>State</span><b>${esc(p.state)}</b></div>
+    <div><span>Branch / region</span><b>${esc(p.branch)} · ${p.region}</b></div>
+    <div><span>Expected receipt</span><b>${fmtD(p.expDate)}</b></div>
+   </div>
+   <div class="meta" style="margin-top:16px"><div><span>Customer address</span><b style="font-weight:400">${esc(p.custAddress)}</b></div></div>
+   </div></div>
+
+  <div class="kpis" style="margin-top:14px">
+    ${kpi('Provision quantity',N(provQty(p)),p.items.length+' line items')}
+    ${kpi('Received quantity',N(recvQty(p)),recvQty(p)?fmtD(lastRecvDate(p)):'Receipt pending','k-teal')}
+    ${kpi('Variance',N(varQty(p)),vp.toFixed(1)+'% against provision','k-'+(vp<=5?'teal':vp<=15?'amber':'red'))}
+    ${kpi('Audit status',p.audit?p.audit.decision:'Not audited',p.audit?fmtD(p.audit.date):'Pending HO verification','k-sky')}
+  </div>
+
+  <div class="section-h">Material line items${canReceive?' — add a receipt entry per condition':''}</div>
+  <div class="panel"><div class="tbl-scroll"><table>
+   <thead><tr><th>Category</th><th>Product name</th><th>Capacity</th><th>Make</th><th>VDC</th><th class="num">Provision qty</th>
+   <th class="num">Received</th><th class="num">Balance</th><th>Receipt entries, condition wise</th><th class="num">Var %</th>${canReceive?'<th></th>':''}</tr></thead>
+   <tbody>${p.items.map(i=>{
+     const got=itemRecv(i), bal=balance(i), iv=i.qty?((i.qty-got)/i.qty*100):0;
+     const ent=(i.receipts||[]).length?(i.receipts).map(r=>`<div class="rcpt">${clsTag(r.cond)}<b>${N(r.qty)}</b> nos
+        <small>${esc(r.loc)||'no location'}${r.rack?' · '+esc(r.rack):''} · ${fmtD(r.date)}</small>
+        ${canReceive?`<button class="lnk" onclick="delReceipt('${p.id}','${i.id}','${r.id}')" title="Remove entry">×</button>`:''}</div>`).join('')
+        :'<small style="color:var(--muted)">No receipt entered</small>';
+     return `<tr><td>${esc(i.cat)}</td><td><b>${esc(i.product||'—')}</b><small>${esc(i.uom||'Nos')}</small></td><td class="mono">${esc(i.cap)||'—'}</td><td>${esc(i.make)||'—'}</td>
+      <td class="mono">${i.vdc&&i.vdc!=='—'?esc(i.vdc)+' VDC':'—'}</td>
+      <td class="num">${N(i.qty)}</td>
+      <td class="num">${got?N(got):'<span style="color:var(--muted)">0</span>'}</td>
+      <td class="num bal" style="color:${bal?'var(--amber)':'var(--teal)'}">${N(bal)}</td>
+      <td>${ent}</td>
+      <td class="num" style="color:${got?varColor(iv):'var(--muted)'};font-weight:600">${got?iv.toFixed(1)+'%':'—'}</td>
+      ${canReceive?`<td><button class="btn ghost sm" onclick="receiptForm('${p.id}','${i.id}')" ${bal?'':'disabled'}>➕ Receipt</button></td>`:''}</tr>`;}).join('')}
+   </tbody>
+   <tfoot><tr><th colspan="5">Total</th><th class="num">${N(provQty(p))}</th><th class="num">${N(recvQty(p))}</th>
+     <th class="num">${N(provQty(p)-recvQty(p))}</th>
+     <th>${CONDITIONS.filter(c=>condQty(p,c)).map(c=>`<div class="rcpt">${clsTag(c)}<b>${N(condQty(p,c))}</b> nos</div>`).join('')||''}</th>
+     <th class="num" style="color:${varColor(vp)}">${vp.toFixed(1)}%</th>${canReceive?'<th></th>':''}</tr></tfoot>
+  </table></div></div>
+
+  ${p.audit?`<div class="section-h">HO audit</div>
+   <div class="panel"><div class="pad"><div class="meta" style="margin-bottom:12px">
+     <div><span>Auditor</span><b>${esc(userName(p.audit.by))}</b></div>
+     <div><span>Audit date</span><b>${fmtD(p.audit.date)}</b></div>
+     <div><span>Quantity expected</span><b>${N(p.audit.expected)}</b></div>
+     <div><span>Quantity found</span><b>${N(p.audit.found)}</b></div>
+     <div><span>Variance</span><b style="color:${varColor(p.audit.expected?((p.audit.expected-p.audit.found)/p.audit.expected*100):0)}">${N(p.audit.expected-p.audit.found)}</b></div>
+     <div><span>Decision</span><b>${esc(p.audit.decision)}</b></div>
+   </div><p style="margin:0;color:var(--muted)">${esc(p.audit.observation)}</p></div></div>`:''}
+
+  <div class="section-h">Trail</div>
+  <div class="panel"><div class="pad"><ul class="log">${p.log.slice().reverse().map(l=>`<li><time>${fmtD(l.t)}</time><span><b>${esc(userName(l.by))}</b> — ${esc(l.txt)}</span></li>`).join('')}</ul></div></div>`;
+}
+
+/* ============================================================
+   DIALOG HELPERS
+   ============================================================ */
+function toast(t,b){ const d=document.createElement('div'); d.className='toast'; d.innerHTML=`<b>${esc(t)}</b>${esc(b||'')}`; document.body.appendChild(d); setTimeout(()=>d.remove(),4200); }
+function dialog(title,body,footer){ document.getElementById('dlgT').textContent=title; document.getElementById('dlgB').innerHTML=body; document.getElementById('dlgF').innerHTML=footer; document.getElementById('dlg').showModal(); }
+const closeDlg=()=>document.getElementById('dlg').close();
+const val=id=>{const e=document.getElementById(id);return e?String(e.value).trim():'';};
+const numv=id=>Number(val(id)||0);
+const opts=(arr,sel)=>arr.map(x=>`<option ${sel===x?'selected':''}>${esc(x)}</option>`).join('');
+
+/* ---------- new provision ---------- */
+function newProvision(){
+  dialog('New buyback provision',`
+   <div class="grid g2">
+    <div class="fg"><label class="f">UID number</label><input class="inp" id="n_uid" placeholder="PRO2220xxx"></div>
+    <div class="fg"><label class="f">Customer name</label><input class="inp" id="n_cu" list="custl"><datalist id="custl">${CUSTOMERS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+   </div>
+   <div class="fg"><label class="f">Customer address</label><textarea class="inp" id="n_ca" rows="2"></textarea></div>
+   <div class="grid g3">
+    <div class="fg"><label class="f">Location</label><input class="inp" id="n_loc"></div>
+    <div class="fg"><label class="f">State</label><select class="inp" id="n_st">${opts(STATES)}</select></div>
+    <div class="fg"><label class="f">Branch</label><select class="inp" id="n_br">${opts(BRANCHES)}</select></div>
+   </div>
+   <div class="grid g2">
+    <div class="fg"><label class="f">PO number</label><input class="inp" id="n_po"></div>
+    <div class="fg"><label class="f">PO date</label><input class="inp" id="n_pod" type="date"></div>
+    <div class="fg"><label class="f">Project ID</label><input class="inp" id="n_pid" placeholder="PRJ-2026-xxx"></div>
+    <div class="fg"><label class="f">Project name</label><input class="inp" id="n_pn"></div>
+    <div class="fg"><label class="f">Project manager</label><input class="inp" id="n_pm" value="${esc(ME.name)}"></div>
+    <div class="fg"><label class="f">Expected receipt date</label><input class="inp" id="n_ed" type="date"></div>
+   </div>
+   <div class="hint" style="margin-top:4px">Saved as a draft. Add material line items category wise, then submit — the branch is notified and the record moves to Action required.</div>`,
+   `<button class="btn ghost" onclick="closeDlg()">Cancel</button><button class="btn" onclick="createProvision()">Create draft</button>`);
+}
+function createProvision(){
+  if(!val('n_cu')||!val('n_po')) return toast('Missing detail','Customer name and PO number are required.');
+  const br=val('n_br');
+  const p={id:'BB-2026-'+String(DB.seq++).padStart(4,'0'),uidNo:val('n_uid')||'—',customer:val('n_cu'),custAddress:val('n_ca'),
+    location:val('n_loc'),state:val('n_st'),po:val('n_po'),poDate:val('n_pod'),projectId:val('n_pid'),projectName:val('n_pn')||'Buyback recovery',
+    pm:val('n_pm'),pmId:ME.id,branch:br,region:REGION[br],expDate:val('n_ed'),provDate:today(),
+    status:'Draft',items:[],audit:null,log:[{t:stamp(),by:ME.id,txt:'Draft provision created against PO '+val('n_po')+'.'}]};
+  DB.provisions.unshift(p); save(); closeDlg(); openRec(p.id);
+  toast('Draft created',p.id+' — add material line items next.');
+}
+function addLine(id){
+  if(!PRODUCTS.length) return toast('Product master not loaded','HO Admin must upload Buyback_Product_Master.xlsx before line items can be added.');
+  dialog('Add material line item',`
+   <div class="hint" style="margin:0 0 14px">Item names come from the product master maintained by HO Admin. Nothing here is typed by hand — if a product is missing it must be added to the master first.</div>
+   <div class="grid g2">
+    <div class="fg"><label class="f">Material category</label><select class="inp" id="l_cat" onchange="cascade('l')">${opts(catList())}</select></div>
+    <div class="fg"><label class="f">Product name</label><select class="inp" id="l_prod" onchange="cascade('l',1)"></select></div>
+    <div class="fg"><label class="f">Capacity</label><select class="inp" id="l_cap"></select></div>
+    <div class="fg"><label class="f">Make</label><select class="inp" id="l_make">${opts(makeList())}</select></div>
+    <div class="fg"><label class="f">VDC</label><select class="inp" id="l_vdc">${opts(VDCS)}</select></div>
+    <div class="fg"><label class="f">Quantity</label><input class="inp" id="l_q" type="number" min="1" value="1"></div>
+   </div>`,
+   `<button class="btn ghost" onclick="closeDlg()">Cancel</button><button class="btn" onclick="saveLine('${id}')">Add item</button>`);
+  cascade('l');
+}
+function cascade(pfx,level){
+  const cat=val(pfx+'_cat'), ps=document.getElementById(pfx+'_prod'), cs=document.getElementById(pfx+'_cap');
+  if(!ps||!cs) return;
+  if(!level) ps.innerHTML=opts(prodList(cat));
+  cs.innerHTML=opts(capList(cat,ps.value));
+}
+function saveLine(id){
+  const p=byId(id), cat=val('l_cat'), prod=val('l_prod'), cap=val('l_cap');
+  if(!prod) return toast('Product needed','Pick a product from the master.');
+  p.items.push({id:uid('LI'),cat,product:prod,cap:cap||'—',make:val('l_make'),vdc:val('l_vdc'),
+    uom:uomOf(cat,prod,cap),qty:numv('l_q')||1,receipts:[]});
+  logEvent(p,'Line item added: '+itemDesc(p.items[p.items.length-1])+' × '+(numv('l_q')||1));
+  save(); closeDlg(); render(); toast('Line item added',p.items.length+' items on this provision.');
+}
+function submitProvision(id){
+  const p=byId(id);
+  if(!p.items.length) return toast('No line items','Add at least one material line item before submitting.');
+  p.status='Action Required';
+  logEvent(p,'Provision submitted. Action required at '+p.branch+'.');
+  notify(USERS.filter(u=>u.role==='Branch'&&u.branch===p.branch).map(u=>u.email).join(', '),
+    `[Buyback] Action required — ${p.id} at ${p.branch}`,
+    `${p.customer}, ${p.location}. UID ${p.uidNo}, PO ${p.po}. ${N(provQty(p))} units across ${p.items.length} line items. Expected receipt by ${fmtD(p.expDate)}.`,p.id);
+  save(); render(); toast('Submitted',p.branch+' now shows this under Action required.');
+}
+function receiptForm(pid,iid){
+  const p=byId(pid), i=p.items.find(x=>x.id===iid), bal=balance(i);
+  dialog('Receipt entry — '+itemDesc(i),`
+   <div class="meta" style="margin-bottom:16px">
+    <div><span>Provision quantity</span><b>${N(i.qty)}</b></div>
+    <div><span>Already received</span><b>${N(itemRecv(i))}</b></div>
+    <div><span>Balance available</span><b style="color:var(--amber)">${N(bal)}</b></div>
+   </div>
+   ${(i.receipts||[]).length?`<div class="fg"><label class="f">Entries already recorded</label>
+     ${i.receipts.map(r=>`<div class="rcpt">${clsTag(r.cond)}<b>${N(r.qty)}</b> nos <small>${esc(r.loc)||'—'} · ${fmtD(r.date)}</small></div>`).join('')}</div>`:''}
+   <div class="grid g2">
+    <div class="fg"><label class="f">Quantity received</label><input class="inp" id="e_q" type="number" min="1" max="${bal}" value="${bal}"></div>
+    <div class="fg"><label class="f">Material condition</label><select class="inp" id="e_c">${opts(CONDITIONS)}</select></div>
+    <div class="fg"><label class="f">Storage location</label><input class="inp" id="e_l" placeholder="Branch store" value="${esc((i.receipts[0]||{}).loc||'')}"></div>
+    <div class="fg"><label class="f">Rack number</label><input class="inp" id="e_r" placeholder="R-01" value="${esc((i.receipts[0]||{}).rack||'')}"></div>
+    <div class="fg"><label class="f">Receipt date</label><input class="inp" id="e_d" type="date" value="${today()}"></div>
+    <div class="fg"><label class="f">Remarks</label><input class="inp" id="e_rm"></div>
+   </div>
+   <div class="hint" style="margin-top:4px">Add one entry per condition. Repeat this for the same line until the balance is nil, or leave a balance and send to audit as a short receipt.</div>`,
+   `<button class="btn ghost" onclick="closeDlg()">Cancel</button><button class="btn teal" onclick="saveReceiptEntry('${pid}','${iid}')">Add entry</button>`);
+}
+function saveReceiptEntry(pid,iid){
+  const p=byId(pid), i=p.items.find(x=>x.id===iid), bal=balance(i);
+  const q=numv('e_q');
+  if(!q||q<1) return toast('Quantity needed','Enter a quantity of at least one.');
+  if(q>bal) return toast('Exceeds balance','Only '+N(bal)+' units remain unreceived against this line.');
+  i.receipts.push({id:uid('RC'),qty:q,cond:val('e_c'),date:val('e_d')||today(),loc:val('e_l'),rack:val('e_r'),remarks:val('e_rm'),by:ME.id});
+  logEvent(p,`Receipt entry — ${itemDesc(i)}: ${N(q)} nos as ${val('e_c')}. Line balance ${N(balance(i))}.`);
+  recalc(p); save(); closeDlg(); render();
+  toast('Entry added',N(q)+' nos as '+val('e_c')+'. Balance '+N(balance(i))+'.');
+}
+function delReceipt(pid,iid,rid){
+  const p=byId(pid), i=p.items.find(x=>x.id===iid), ix=i.receipts.findIndex(r=>r.id===rid);
+  if(ix<0) return;
+  const r=i.receipts[ix];
+  delete DB.meta[pid+':'+iid+':'+rid];
+  i.receipts.splice(ix,1);
+  logEvent(p,`Receipt entry removed — ${itemDesc(i)}: ${N(r.qty)} nos ${r.cond}.`);
+  recalc(p); save(); render(); toast('Entry removed','Balance restored to '+N(balance(i))+'.');
+}
+function recalc(p){
+  if(['Verified','Closed'].includes(p.status)) return;
+  const any=p.items.some(i=>itemRecv(i)>0), full=p.items.every(i=>itemRecv(i)>=+i.qty);
+  if(full){
+    if(p.status!=='Pending Audit'){
+      p.status='Pending Audit';
+      logEvent(p,'Fully received. Inventory available, HO audit notified.');
+      notify(USERS.filter(u=>u.role==='Audit').map(u=>u.email).join(', '),`[Buyback] ${p.id} ready for HO audit`,
+        `${p.branch} completed receipt for ${p.customer}. Variance ${varPct(p).toFixed(1)}%.`,p.id);
+    }
+  } else p.status=any?'Partially Received':'Action Required';
+}
+function closeReceipt(id){
+  const p=byId(id);
+  if(!recvQty(p)) return toast('Nothing received','Add at least one receipt entry before sending to audit.');
+  const short=provQty(p)-recvQty(p);
+  p.status='Pending Audit';
+  logEvent(p,`Receipt closed by branch — ${N(recvQty(p))} of ${N(provQty(p))} units`+(short?`, short closed with a balance of ${N(short)}.`:'.')+
+    ' Classification: '+CONDITIONS.filter(c=>condQty(p,c)).map(c=>`${c} ${N(condQty(p,c))}`).join(', ')+'.');
+  notify(USERS.filter(u=>u.role==='Audit').map(u=>u.email).join(', '),`[Buyback] ${p.id} sent for HO audit`,
+    `${p.branch} closed receipt for ${p.customer}. Received ${N(recvQty(p))} of ${N(provQty(p))}, variance ${varPct(p).toFixed(1)}%.`,p.id);
+  save(); render(); toast('Sent to HO audit',short?N(short)+' units short closed.':'Fully received.');
+}
+function auditForm(id){
+  const p=byId(id);
+  dialog('HO audit — '+p.id,`
+   <div class="meta" style="margin-bottom:14px">
+    <div><span>Branch</span><b>${esc(p.branch)}</b></div>
+    <div><span>Provision quantity</span><b>${N(provQty(p))}</b></div>
+    <div><span>Branch receipt</span><b>${N(recvQty(p))}</b></div>
+   </div>
+   <div class="tbl-scroll"><table><thead><tr><th>Item</th><th class="num">Provision</th><th class="num">Receipt</th><th class="num">Physical count</th></tr></thead>
+   <tbody>${p.items.map(i=>`<tr><td>${esc(itemDesc(i))}<small>${(i.receipts||[]).map(r=>r.cond+' '+N(r.qty)).join(' · ')||'no entries'}</small></td>
+     <td class="num">${N(i.qty)}</td><td class="num">${N(itemRecv(i))}</td>
+     <td class="num"><input class="inline-edit" type="number" min="0" id="pc_${i.id}" value="${itemRecv(i)}"></td></tr>`).join('')}
+   </tbody></table></div>
+   <div class="fg" style="margin-top:14px"><label class="f">Observation</label><textarea class="inp" id="au_o" rows="3">${esc(suggestObs(p))}</textarea>
+     <button class="btn ghost sm" style="margin-top:7px" onclick="document.getElementById('au_o').value=suggestObs(byId('${p.id}'))">Regenerate</button></div>`,
+   `<button class="btn ghost" onclick="closeDlg()">Cancel</button>
+    <button class="btn red" onclick="setAudit('${p.id}','Rejected')">Reject — rework required</button>
+    <button class="btn teal" onclick="setAudit('${p.id}','Approved')">Approve — inventory verified</button>`);
+}
+function suggestObs(p){
+  const v=varPct(p);
+  const prior=DB.provisions.filter(x=>x.branch===p.branch&&x.id!==p.id&&recvQty(x)>0&&varPct(x)>5).length;
+  let s=`Physical verification carried out at ${p.branch} against provision ${p.id} (UID ${p.uidNo}, PO ${p.po}). `;
+  s+= v<=0.001?`Quantity found matches the provision in full. `:`A shortage of ${N(varQty(p))} units against ${N(provQty(p))} provisioned (${v.toFixed(1)}%) was identified. `;
+  if(prior) s+=`Similar variance was observed in ${prior} earlier case${prior>1?'s':''} at this branch; detailed investigation is recommended. `;
+  s+= v>15?`Variance exceeds the 15% tolerance — branch to produce gate pass and courier POD before re-audit.`:v>5?`Variance is within the review band; branch explanation recorded.`:`No adverse observation.`;
+  return s;
+}
+function setAudit(id,decision){
+  const p=byId(id);
+  const found=p.items.reduce((s,i)=>s+numv('pc_'+i.id),0);
+  p.audit={by:ME.id,date:today(),expected:provQty(p),found,observation:val('au_o'),decision};
+  p.status=decision==='Approved'?'Verified':'Audit Rejected';
+  logEvent(p,'HO audit decision: '+decision+'.');
+  if(decision==='Rejected')
+    notify(USERS.filter(u=>u.role==='Branch'&&u.branch===p.branch).map(u=>u.email).join(', '),
+      `[Buyback] Audit rejected — ${p.id}, rework required`,val('au_o'),p.id);
+  save(); closeDlg(); render(); toast('Audit recorded',decision==='Approved'?'Inventory verified.':'Sent back to branch for rework.');
+}
+function closeCase(id){
+  const p=byId(id); p.status='Closed'; logEvent(p,'Case closed. Inventory transferred to branch stock, Power BI dataset refresh queued.');
+  notify([p.pmId].map(i=>(USERS.find(u=>u.id===i)||{}).email).filter(Boolean).join(', '),`[Buyback] ${p.id} closed`,
+    `Audit verified and case closed for ${p.customer}, PO ${p.po}.`,p.id);
+  save(); render(); toast('Case closed','Archived and removed from active queues.');
+}
+
+/* ============================================================
+   ADDITIONAL MATERIAL — separate menu, not provision linked
+   ============================================================ */
+function viewAdditional(){
+  if(['Branch','Admin'].includes(ME.role))
+    document.getElementById('pgActions').innerHTML=`<button class="btn amber" onclick="newAdditional()">➕ Additional material</button>`;
+  const list=visibleAdditional();
+  const tot=list.reduce((s,a)=>s+ +a.qty,0);
+  return `<div class="banner"><b>Additional inventory — not linked to any provision</b>
+    <p>Material collected at the branch that was never provisioned by the project team. Every entry carries the system flag <b>Additional Inventory = YES</b> and is reported separately in branch inventory, the HO dashboard and audit reports.</p></div>
+   <div class="kpis">
+    ${kpi('Entries',list.length,ME.role==='Branch'?ME.branch:'All branches')}
+    ${kpi('Units',N(tot),'Off-provision','k-amber')}
+    ${kpi('Scrap',N(list.filter(a=>a.cond==='Scrap').reduce((s,a)=>s+ +a.qty,0)),'To disposal','k-red')}
+    ${kpi('Reusable',N(list.filter(a=>a.cond==='Reusable Service Stock').reduce((s,a)=>s+ +a.qty,0)),'To service stock','k-teal')}
+   </div><div style="height:14px"></div>
+   <div class="panel"><header><div><h3>Additional material register</h3><p>Flag: Additional Inventory = YES</p></div>
+     <button class="btn ghost sm" onclick="exportAddl()">Export CSV</button></header>
+   <div class="tbl-scroll"><table><thead><tr><th>Receipt date</th><th>Site ID / ATM ID</th><th>UID / customer</th><th>Location with address</th><th>Description</th><th>Category</th><th>Capacity / make</th><th class="num">Qty</th><th>Condition</th><th>Storage</th>${ME.role!=='Branch'?'<th>Branch</th>':''}<th>Photo</th><th>Entered by</th></tr></thead>
+   <tbody>${list.length?list.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(a=>`<tr>
+     <td class="mono">${fmtD(a.date)}</td>
+     <td class="mono"><b>${esc(a.site)||'—'}</b><small>ATM ${esc(a.atm)||'—'}</small></td>
+     <td><b>${esc(a.cust)||'—'}</b><small>UID ${esc(a.uidNo)||'—'}</small></td>
+     <td><small>${esc(a.addr)||'—'}</small></td>
+     <td><b>${esc(addlDesc(a))}</b><small>${esc(a.remarks)}</small></td><td>${esc(a.cat)}</td>
+     <td>${esc(a.cap)||'—'}${a.make?'<small>'+esc(a.make)+'</small>':''}</td>
+     <td class="num">${N(a.qty)}</td><td>${clsTag(a.cond)}</td><td>${esc(a.loc)||'—'}</td>
+     ${ME.role!=='Branch'?`<td>${esc(a.branch)}</td>`:''}
+     <td><small>${esc(a.photo||'—')}</small></td><td><small>${esc(userName(a.by))}</small></td></tr>`).join('')
+     :`<tr><td colspan="13"><div class="empty"><b>No additional material recorded</b>Use the button above when material arrives that was never provisioned.</div></td></tr>`}</tbody></table></div></div>`;
+}
+function newAdditional(){
+  if(!PRODUCTS.length) return toast('Product master not loaded','HO Admin must upload Buyback_Product_Master.xlsx first.');
+  dialog('Additional material receipt',`
+   <div class="hint" style="margin:0 0 14px">This entry is <b>not linked to any provision</b>. It is flagged Additional Inventory = YES and reported separately. Capture the site identifiers so the material can still be traced back to where it came from.</div>
+   <div class="section-h" style="margin-top:0">Site identification</div>
+   <div class="grid g3">
+    <div class="fg"><label class="f">UID number</label><input class="inp" id="x_uid" placeholder="PRO2220xxx"></div>
+    <div class="fg"><label class="f">Site ID</label><input class="inp" id="x_site" placeholder="PS-KN-0142"></div>
+    <div class="fg"><label class="f">ATM ID</label><input class="inp" id="x_atm" placeholder="S1BKN0142"></div>
+   </div>
+   <div class="fg"><label class="f">Customer name</label><input class="inp" id="x_cust" list="custl2"><datalist id="custl2">${CUSTOMERS.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+   <div class="fg"><label class="f">Location with address</label><textarea class="inp" id="x_addr" rows="2" placeholder="Site name, street, city, PIN, state"></textarea></div>
+   <div class="section-h">Material received</div>
+   <div class="grid g2">
+    <div class="fg"><label class="f">Receipt date</label><input class="inp" id="x_d" type="date" value="${today()}"></div>
+    <div class="fg"><label class="f">Material category</label><select class="inp" id="x_cat" onchange="cascade('x')">${opts(catList())}</select></div>
+   </div>
+   <div class="grid g3">
+    <div class="fg"><label class="f">Product name</label><select class="inp" id="x_prod" onchange="cascade('x',1)"></select></div>
+    <div class="fg"><label class="f">Capacity</label><select class="inp" id="x_cap"></select></div>
+    <div class="fg"><label class="f">Make</label><select class="inp" id="x_make">${opts(makeList())}</select></div>
+   </div>
+   <div class="grid g3">
+    <div class="fg"><label class="f">Quantity</label><input class="inp" id="x_q" type="number" min="1" value="1"></div>
+    <div class="fg"><label class="f">Condition</label><select class="inp" id="x_cond">${opts(CONDITIONS)}</select></div>
+    <div class="fg"><label class="f">Storage location</label><input class="inp" id="x_loc"></div>
+   </div>
+   <div class="fg"><label class="f">Remarks</label><textarea class="inp" id="x_rm" rows="2"></textarea></div>
+   <div class="fg"><label class="f">Photograph</label><input class="inp" type="file" id="x_f" accept="image/*"></div>`,
+   `<button class="btn ghost" onclick="closeDlg()">Cancel</button><button class="btn amber" onclick="saveAdditional()">Save entry</button>`);
+  cascade('x');
+}
+function saveAdditional(){
+  if(!val('x_prod')) return toast('Product needed','Pick a product from the master.');
+  const f=document.getElementById('x_f');
+  const a={id:uid('AD'),date:val('x_d')||today(),branch:ME.role==='Branch'?ME.branch:BRANCHES[0],
+    uidNo:val('x_uid'),site:val('x_site'),atm:val('x_atm'),cust:val('x_cust'),addr:val('x_addr'),
+    cat:val('x_cat'),product:val('x_prod'),cap:val('x_cap')||'—',make:val('x_make'),
+    uom:uomOf(val('x_cat'),val('x_prod'),val('x_cap')),qty:numv('x_q')||1,cond:val('x_cond'),
+    loc:val('x_loc'),remarks:val('x_rm'),by:ME.id,photo:f&&f.files&&f.files[0]?f.files[0].name:''};
+  DB.additional.unshift(a);
+  notify(USERS.filter(u=>u.role==='Audit').map(u=>u.email).join(', '),`[Buyback] Additional material at ${a.branch}`,
+    `${addlDesc(a)} × ${a.qty}, condition ${a.cond}. Site ${a.site||'—'}, ATM ${a.atm||'—'}, UID ${a.uidNo||'—'}, customer ${a.cust||'—'}. Not linked to any provision.`,'');
+  save(); closeDlg(); render(); toast('Additional material saved','Flagged Additional Inventory = YES.');
+}
+
+/* ============================================================
+   BRANCH INVENTORY
+   ============================================================ */
+function viewInventory(){
+  let rows=stockRows();
+  if(FILTER.b) rows=rows.filter(r=>r.branch===FILTER.b);
+  if(FILTER.c) rows=rows.filter(r=>r.cat===FILTER.c);
+  if(FILTER.k) rows=rows.filter(r=>r.cond===FILTER.k);
+  const tot=rows.reduce((s,r)=>s+r.qty,0);
+  const pend=visible().filter(p=>BRANCH_ACTION.includes(p.status)).length;
+  const closed=visible().filter(p=>p.status==='Closed').length;
+  const branches=[...new Set(stockRows().map(r=>r.branch))].sort();
+  return `<div class="kpis">
+    ${kpi('Total inventory received',N(rows.filter(r=>!r.addl).reduce((s,r)=>s+r.qty,0)),rows.length+' stock lines')}
+    ${kpi('Additional inventory',N(rows.filter(r=>r.addl).reduce((s,r)=>s+r.qty,0)),'Not provision linked','k-amber')}
+    ${kpi('Pending receipts',pend,'Provisions awaiting action','k-red')}
+    ${kpi('Closed cases',closed,'Audited and archived','k-teal')}
+   </div>
+   <div class="toolbar" style="margin-top:16px">
+    ${ME.role!=='Branch'?`<select class="inp" onchange="FILTER.b=this.value;render()"><option value="">All branches</option>${branches.map(b=>`<option ${FILTER.b===b?'selected':''}>${b}</option>`).join('')}</select>`:''}
+    <select class="inp" onchange="FILTER.c=this.value;render()"><option value="">All categories</option>${catList().map(c=>`<option ${FILTER.c===c?'selected':''}>${c}</option>`).join('')}</select>
+    <select class="inp" onchange="FILTER.k=this.value;render()"><option value="">All conditions</option>${CONDITIONS.map(c=>`<option ${FILTER.k===c?'selected':''}>${c}</option>`).join('')}</select>
+    <button class="btn ghost sm" onclick="FILTER={};render()">Clear</button><span style="flex:1"></span>
+    <button class="btn ghost sm" onclick="exportInv()">Export CSV</button></div>
+   <div class="panel"><header><div><h3>Inventory grid${ME.role==='Branch'?' — '+ME.branch:''}</h3><p>${N(tot)} units in view, traceable to provision or additional entry</p></div></header>
+   <div class="tbl-scroll"><table><thead><tr><th>Description</th><th>Category</th>${ME.role!=='Branch'?'<th>Branch</th>':''}<th class="num">Qty</th><th>Condition</th><th>Classification queue</th><th>Location</th><th>Source</th><th>Age</th></tr></thead>
+   <tbody>${rows.length?rows.map(r=>`<tr><td><b>${esc(r.desc)}</b><small>${esc(r.cust)}</small></td><td>${esc(r.cat)}</td>
+     ${ME.role!=='Branch'?`<td>${esc(r.branch)}</td>`:''}
+     <td class="num">${N(r.qty)}</td><td>${clsTag(r.cond)}</td><td><small>${r.cond==='Scrap'?'Scrap disposal':r.cond==='Need Repair'?'Repair queue':'Reuse inventory'}</small></td>
+     <td>${esc(r.loc)||'—'}${r.rack?' · '+esc(r.rack):''}</td>
+     <td>${r.addl?'<span class="tag t-amber">Additional</span>':`<a onclick="openRec('${r.src}')" style="cursor:pointer">${r.src}</a>`}</td>
+     <td class="mono">${r.date?days(r.date)+' d':'—'}</td></tr>`).join(''):`<tr><td colspan="9"><div class="empty"><b>No inventory</b>Nothing matches the current filters.</div></td></tr>`}</tbody></table></div></div>`;
+}
+
+/* ============================================================
+   REPAIR / REUSABLE / SCRAP QUEUES
+   ============================================================ */
+function queueTable(cond,cols){
+  const rows=stockRows().filter(r=>r.cond===cond);
+  if(!rows.length) return `<div class="panel"><div class="empty"><b>Queue is empty</b>Nothing classified as ${cond.toLowerCase()} in your scope.</div></div>`;
+  return `<div class="panel"><div class="tbl-scroll"><table><thead><tr>${cols.head.map(h=>`<th class="${/qty|value/i.test(h)?'num':''}">${h}</th>`).join('')}</tr></thead>
+   <tbody>${rows.map(cols.row).join('')}</tbody></table></div></div>`;
+}
+function viewRepair(){
+  const rows=stockRows().filter(r=>r.cond==='Need Repair');
+  const tot=rows.reduce((s,r)=>s+r.qty,0);
+  return `<div class="banner"><b>Repair queue</b><p>Material received in a repairable condition. Once repaired it moves into reusable service stock and can be transferred to branch stock.</p></div>
+   <div class="kpis">${kpi('Units in queue',N(tot),rows.length+' lines','k-amber')}
+    ${kpi('Under repair',N(rows.filter(r=>(meta(r.rid).repair||{}).status==='In repair').reduce((s,r)=>s+r.qty,0)),'With vendor')}
+    ${kpi('Repaired',N(rows.filter(r=>(meta(r.rid).repair||{}).status==='Repaired').reduce((s,r)=>s+r.qty,0)),'Moved to service stock','k-teal')}
+    ${kpi('Ageing over 60 days',N(rows.filter(r=>r.date&&days(r.date)>60).reduce((s,r)=>s+r.qty,0)),'Escalate','k-red')}</div>
+   <div style="height:14px"></div>
+   ${queueTable('Need Repair',{head:['Material','Category','Branch','Qty','Received','Age','Repair status','Vendor','Action'],
+    row:r=>{const m=meta(r.rid).repair||{status:'Pending'};
+     return `<tr><td><b>${esc(r.desc)}</b><small>${r.addl?'Additional entry':r.src}</small></td><td>${esc(r.cat)}</td><td>${esc(r.branch)}</td>
+      <td class="num">${N(r.qty)}</td><td class="mono">${fmtD(r.date)}</td><td class="mono">${r.date?days(r.date)+' d':'—'}</td>
+      <td>${tag(m.status==='Repaired'?'Verified':m.status==='In repair'?'Pending Audit':'Action Required')} ${esc(m.status)}</td>
+      <td><small>${esc(m.vendor||'—')}</small></td>
+      <td><button class="btn ghost sm" onclick="repairForm('${r.rid}')">Update</button></td></tr>`;}})}`;
+}
+function repairForm(rid){
+  const m=meta(rid).repair||{};
+  dialog('Update repair status',`
+   <div class="grid g2">
+    <div class="fg"><label class="f">Repair status</label><select class="inp" id="rp_s">${opts(['Pending','In repair','Repaired'],m.status||'Pending')}</select></div>
+    <div class="fg"><label class="f">Repair vendor</label><input class="inp" id="rp_v" value="${esc(m.vendor||'')}"></div>
+    <div class="fg"><label class="f">Sent on</label><input class="inp" id="rp_d" type="date" value="${esc(m.date||'')}"></div>
+    <div class="fg"><label class="f">Expected back</label><input class="inp" id="rp_e" type="date" value="${esc(m.eta||'')}"></div>
+   </div>
+   <div class="fg"><label class="f">Remarks</label><input class="inp" id="rp_r" value="${esc(m.remarks||'')}"></div>`,
+   `<button class="btn ghost" onclick="closeDlg()">Cancel</button><button class="btn" onclick="saveRepair('${rid}')">Save</button>`);
+}
+function saveRepair(rid){
+  meta(rid).repair={status:val('rp_s'),vendor:val('rp_v'),date:val('rp_d'),eta:val('rp_e'),remarks:val('rp_r'),by:ME.id};
+  save(); closeDlg(); render(); toast('Repair updated',val('rp_s'));
+}
+function viewReuse(){
+  const rows=stockRows().filter(r=>r.cond==='Reusable Service Stock');
+  const tot=rows.reduce((s,r)=>s+r.qty,0);
+  const st=k=>rows.filter(r=>((meta(r.rid).transfer||{}).status||'In branch inventory')===k).reduce((s,r)=>s+r.qty,0);
+  return `<div class="banner"><b>Reusable service stock</b>
+    <p>Material fit for reuse. Raise a transfer request, get it approved, and the units move into branch service stock.</p>
+    <div class="flowbox" style="margin-top:10px"><span>Branch inventory</span><i>→</i><span>Transfer request</span><i>→</i><span>Approval</span><i>→</i><span>Branch service stock</span></div></div>
+   <div class="kpis">${kpi('Reusable units',N(tot),rows.length+' lines','k-teal')}
+    ${kpi('Transfer requested',N(st('Requested')),'Awaiting approval','k-amber')}
+    ${kpi('Approved',N(st('Approved')),'Ready to move','k-sky')}
+    ${kpi('In service stock',N(st('Transferred')),'Transfer complete','k-teal')}</div>
+   <div style="height:14px"></div>
+   ${queueTable('Reusable Service Stock',{head:['Material','Category','Branch','Qty','Received','Transfer status','Approved by','Action'],
+    row:r=>{const m=meta(r.rid).transfer||{status:'In branch inventory'};
+     return `<tr><td><b>${esc(r.desc)}</b><small>${r.addl?'Additional entry':r.src}</small></td><td>${esc(r.cat)}</td><td>${esc(r.branch)}</td>
+      <td class="num">${N(r.qty)}</td><td class="mono">${fmtD(r.date)}</td>
+      <td>${esc(m.status)}</td><td><small>${esc(m.approver?userName(m.approver):'—')}</small></td>
+      <td>${m.status==='Requested'&&['Audit','Admin'].includes(ME.role)
+        ?`<button class="btn teal sm" onclick="setTransfer('${r.rid}','Approved')">Approve</button> <button class="btn ghost sm" onclick="setTransfer('${r.rid}','Rejected')">Reject</button>`
+        :m.status==='Approved'?`<button class="btn sm" onclick="setTransfer('${r.rid}','Transferred')">Mark transferred</button>`
+        :m.status==='In branch inventory'?`<button class="btn ghost sm" onclick="setTransfer('${r.rid}','Requested')">Raise transfer</button>`:'—'}</td></tr>`;}})}`;
+}
+function setTransfer(rid,status){
+  const m=meta(rid); m.transfer=Object.assign({},m.transfer,{status,date:today(),by:ME.id});
+  if(status==='Approved'||status==='Rejected') m.transfer.approver=ME.id;
+  if(status==='Requested') notify(USERS.filter(u=>u.role==='Audit').map(u=>u.email).join(', '),'[Buyback] Transfer request raised','Reusable service stock transfer awaiting approval.','');
+  save(); render(); toast('Transfer '+status.toLowerCase(),'Register updated.');
+}
+function viewScrap(){
+  const rows=stockRows().filter(r=>r.cond==='Scrap');
+  const tot=rows.reduce((s,r)=>s+r.qty,0);
+  const st=k=>rows.filter(r=>((meta(r.rid).scrap||{}).status||'Pending')===k).reduce((s,r)=>s+r.qty,0);
+  return `<div class="banner"><b>Scrap register</b><p>Generated automatically from every line received in scrap condition. Capture scrap value, disposal vendor and disposal date, then close the entry.</p></div>
+   <div class="kpis">${kpi('Scrap units',N(tot),rows.length+' lines','k-red')}
+    ${kpi('Pending disposal',N(st('Pending')),'Not yet sold','k-amber')}
+    ${kpi('Sold',N(st('Sold')),'Awaiting closure','k-sky')}
+    ${kpi('Closed',N(st('Closed')),'Disposal complete','k-teal')}</div>
+   <div style="height:14px"></div>
+   ${queueTable('Scrap',{head:['Material','Category','Branch','Qty','Disposal vendor','Disposal date','Disposal reference','Status','Action'],
+    row:r=>{const m=meta(r.rid).scrap||{status:'Pending'};
+     return `<tr><td><b>${esc(r.desc)}</b><small>${r.addl?'Additional entry':r.src}</small></td><td>${esc(r.cat)}</td><td>${esc(r.branch)}</td>
+      <td class="num">${N(r.qty)}</td><td><small>${esc(m.vendor||'—')}</small></td>
+      <td class="mono">${m.date?fmtD(m.date):'—'}</td><td><small>${esc(m.ref||'—')}</small></td><td>${tag(m.status==='Closed'?'Closed':m.status==='Sold'?'Verified':'Action Required')} ${esc(m.status)}</td>
+      <td><button class="btn ghost sm" onclick="scrapForm('${r.rid}')">Update</button></td></tr>`;}})}`;
+}
+function scrapForm(rid){
+  const m=meta(rid).scrap||{};
+  dialog('Scrap disposal entry',`
+   <div class="grid g2">
+    <div class="fg"><label class="f">Disposal vendor</label><input class="inp" id="sc_ve" value="${esc(m.vendor||'')}"></div>
+    <div class="fg"><label class="f">Disposal reference / gate pass</label><input class="inp" id="sc_ref" value="${esc(m.ref||'')}"></div>
+    <div class="fg"><label class="f">Disposal date</label><input class="inp" id="sc_d" type="date" value="${esc(m.date||'')}"></div>
+    <div class="fg"><label class="f">Status</label><select class="inp" id="sc_s">${opts(['Pending','Sold','Closed'],m.status||'Pending')}</select></div>
+   </div>
+   <div class="fg"><label class="f">Remarks</label><input class="inp" id="sc_r" value="${esc(m.remarks||'')}"></div>`,
+   `<button class="btn ghost" onclick="closeDlg()">Cancel</button><button class="btn" onclick="saveScrap('${rid}')">Save</button>`);
+}
+function saveScrap(rid){
+  meta(rid).scrap={vendor:val('sc_ve'),ref:val('sc_ref'),date:val('sc_d'),status:val('sc_s'),remarks:val('sc_r'),by:ME.id};
+  save(); closeDlg(); render(); toast('Scrap register updated',val('sc_s'));
+}
+
+/* ============================================================
+   REPORTS
+   ============================================================ */
+function viewReports(){
+  const t=TAB.rep||'branch';
+  const v=visible();
+  const tabs=`<div class="tabs">${[['branch','Branch audit report'],['var','Variance report'],['miss','Missing material report']]
+    .map(([k,l])=>`<button class="${t===k?'on':''}" onclick="TAB.rep='${k}';render()">${l}</button>`).join('')}</div>`;
+  let body='';
+  if(t==='branch'){
+    const m={}; stockRows().forEach(r=>{const x=m[r.branch]=m[r.branch]||{u:0,s:0,rp:0,re:0,a:0};
+      x.u+=r.qty; if(r.cond==='Scrap')x.s+=r.qty; else if(r.cond==='Need Repair')x.rp+=r.qty; else x.re+=r.qty; if(r.addl)x.a+=r.qty;});
+    body=`<div class="panel"><header><div><h3>Branch audit report</h3><p>Inventory position and classification by branch</p></div>
+      <button class="btn ghost sm" onclick="printReport('branch')">Export PDF</button></header>
+     <div class="tbl-scroll"><table><thead><tr><th>Branch</th><th class="num">Total units</th><th class="num">Scrap</th><th class="num">Need repair</th><th class="num">Reusable</th><th class="num">Additional</th><th class="num">Audited cases</th></tr></thead>
+     <tbody>${Object.entries(m).map(([k,x])=>`<tr><td><b>${esc(k)}</b></td><td class="num">${N(x.u)}</td><td class="num">${N(x.s)}</td><td class="num">${N(x.rp)}</td>
+       <td class="num">${N(x.re)}</td><td class="num">${N(x.a)}</td><td class="num">${v.filter(p=>p.branch===k&&p.audit).length}</td></tr>`).join('')
+       ||'<tr><td colspan="7"><div class="empty">No data</div></td></tr>'}</tbody></table></div></div>`;
+  } else if(t==='var'){
+    const rows=v.filter(p=>recvQty(p)>0).sort((a,b)=>varPct(b)-varPct(a));
+    body=`<div class="panel"><header><div><h3>Variance report</h3><p>Provision against receipt, and against physical audit count</p></div>
+      <button class="btn ghost sm" onclick="printReport('var')">Export PDF</button></header>
+     <div class="tbl-scroll"><table><thead><tr><th>Provision</th><th>Branch</th><th class="num">Provision</th><th class="num">Receipt</th><th class="num">Audit found</th><th class="num">Variance</th><th class="num">Variance %</th><th>Band</th></tr></thead>
+     <tbody>${rows.map(p=>{const pc=varPct(p);return `<tr class="clickrow" onclick="openRec('${p.id}')"><td><b>${p.id}</b><small>${esc(p.customer)}</small></td><td>${esc(p.branch)}</td>
+       <td class="num">${N(provQty(p))}</td><td class="num">${N(recvQty(p))}</td><td class="num">${p.audit?N(p.audit.found):'—'}</td>
+       <td class="num">${N(varQty(p))}</td><td class="num" style="color:${varColor(pc)};font-weight:600">${pc.toFixed(1)}%</td>
+       <td><span class="dot" style="background:${varColor(pc)}"></span>${pc<=5?'Verified band':pc<=15?'Review':'Investigate'}</td></tr>`;}).join('')
+       ||'<tr><td colspan="8"><div class="empty">No receipts yet</div></td></tr>'}</tbody></table></div></div>`;
+  } else {
+    const rows=[];
+    v.forEach(p=>p.items.forEach(i=>{const got=itemRecv(i); if(got< +i.qty) rows.push({p,i,short:+i.qty-got});}));
+    body=`<div class="panel"><header><div><h3>Missing material report</h3><p>Line items where receipt is short of provision</p></div>
+      <button class="btn ghost sm" onclick="printReport('miss')">Export PDF</button></header>
+     <div class="tbl-scroll"><table><thead><tr><th>Provision</th><th>Branch</th><th>Material</th><th>Category</th><th class="num">Provision</th><th class="num">Received</th><th class="num">Short</th><th>Status</th></tr></thead>
+     <tbody>${rows.length?rows.sort((a,b)=>b.short-a.short).map(r=>`<tr class="clickrow" onclick="openRec('${r.p.id}')"><td><b>${r.p.id}</b><small>UID ${esc(r.p.uidNo)}</small></td>
+       <td>${esc(r.p.branch)}</td><td>${esc(itemDesc(r.i))}</td><td>${esc(r.i.cat)}</td><td class="num">${N(r.i.qty)}</td>
+       <td class="num">${N(itemRecv(r.i))}</td><td class="num" style="color:var(--red);font-weight:600">${N(r.short)}</td>
+       <td>${tag(r.p.status)}</td></tr>`).join(''):'<tr><td colspan="8"><div class="empty"><b>Nothing missing</b>Every line item is fully received.</div></td></tr>'}</tbody></table></div></div>`;
+  }
+  return tabs+body;
+}
+
+/* ============================================================
+   ACTIVITY / ADMIN
+   ============================================================ */
+function viewActivity(){
+  const mine=DB.notif.filter(n=>ME.role==='Admin'||ME.role==='Audit'||(n.to||'').includes(ME.email));
+  const events=visible().flatMap(p=>p.log.map(l=>({...l,pid:p.id}))).sort((a,b)=>b.t.localeCompare(a.t)).slice(0,60);
+  const aged=stockRows().filter(r=>r.date&&days(r.date)>30);
+  return `<div class="rowsplit">
+   <div class="panel"><header><div><h3>Workflow trail</h3><p>Every state change in your scope</p></div></header>
+    <div class="pad"><ul class="log">${events.length?events.map(e=>`<li><time>${fmtD(e.t)}</time><span><a onclick="openRec('${e.pid}')" style="cursor:pointer">${e.pid}</a> · <b>${esc(userName(e.by))}</b> — ${esc(e.txt)}</span></li>`).join(''):'<li>No activity yet.</li>'}</ul></div></div>
+   <div class="panel"><header><div><h3>Notifications</h3><p>Outlook and Teams, simulated in this build</p></div></header>
+    <div class="pad"><ul class="log">${mine.length?mine.slice(0,25).map(n=>`<li><time>${fmtD(n.t)}</time><span><b>${esc(n.subject)}</b><br><small style="color:var(--muted)">to ${esc(n.to)}</small><br>${esc(n.body)}</span></li>`).join(''):'<li>No notifications yet.</li>'}</ul></div></div>
+  </div>
+  <div class="section-h">Inventory ageing alerts</div>
+  <div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Material</th><th>Branch</th><th class="num">Qty</th><th>Condition</th><th class="num">Age</th><th>Alert</th></tr></thead>
+   <tbody>${aged.length?aged.sort((a,b)=>days(b.date)-days(a.date)).slice(0,25).map(r=>{const d=days(r.date);
+    return `<tr><td>${esc(r.desc)}</td><td>${esc(r.branch)}</td><td class="num">${N(r.qty)}</td><td>${clsTag(r.cond)}</td>
+     <td class="num">${d} d</td><td>${d>90?'<span class="tag t-red">90 day escalation</span>':d>60?'<span class="tag t-amber">60 day alert</span>':'<span class="tag t-blue">30 day alert</span>'}</td></tr>`;}).join('')
+    :'<tr><td colspan="6"><div class="empty">No inventory older than 30 days</div></td></tr>'}</tbody></table></div></div>`;
+}
+function viewAdmin(){
+  document.getElementById('pgActions').innerHTML=`<button class="btn ghost sm" onclick="exportProv()">Export provisions</button><button class="btn ghost sm" onclick="exportInv()">Export inventory</button><button class="btn ghost sm" onclick="if(confirm('Clear all locally stored records? This cannot be undone.'))resetAll()">Clear local data</button>`;
+  const t=TAB.adm||'user';
+  const tabs=`<div class="tabs">${[['load','Master data upload'],['prod','Product master'],['user','User master'],['branch','Branch master'],['cust','Customer master'],['cat','Material category'],['cond','Condition master'],['sp','SharePoint repository'],['cloud','Cloud & security']]
+    .map(([k,l])=>`<button class="${t===k?'on':''}" onclick="TAB.adm='${k}';render()">${l}</button>`).join('')}</div>`;
+  let body='';
+  if(t==='load'){
+    body=`<div class="banner"><b>Master data drives the application</b>
+      <p>User accounts and every product name come from two Excel workbooks, not from the application code. Upload a revised master here and it takes effect immediately for every screen. On the hosted build these files sit in SharePoint and are read automatically at sign-in; this upload is the manual override.</p></div>
+     <div class="kpis">
+      ${kpi('Users loaded',N(USERS.length),MASTER_INFO.users,'k-teal')}
+      ${kpi('Products loaded',N(PRODUCTS.length),catList().length+' categories','k-sky')}
+      ${kpi('Makes loaded',N(makeList().length),'Brand drop-down','k-amber')}
+      ${kpi('Storage',DB&&DB.provisions?N(DB.provisions.length)+' provisions':'—','Held in this browser')}
+     </div>
+     <div style="height:14px"></div>
+     <div class="panel"><header><div><h3>Upload master workbooks</h3><p>Buyback_User_Master.xlsx and Buyback_Product_Master.xlsx — select both together</p></div></header>
+      <div class="pad">
+       <input class="inp" type="file" id="admFile" accept=".xlsx,.xls,.csv,.json" multiple onchange="adminUpload(this)">
+       <div id="admMsg" style="margin-top:10px;font-size:13px;color:var(--muted)">Sheets are matched by their header row, so the sheet order in the workbook does not matter.</div>
+       <div class="hint" style="margin-top:14px">A product already used on a provision must never be deleted from the master — set its Active column to No instead, so historic records keep the name of what they hold.</div>
+      </div></div>`;
+  } else if(t==='prod'){
+    body=`<div class="panel"><header><div><h3>Product master</h3><p>${N(PRODUCTS.length)} active products across ${catList().length} categories — the only source of item names in the portal</p></div>
+       <button class="btn ghost sm" onclick="exportProducts()">Export CSV</button></header>
+     <div class="tbl-scroll" style="max-height:520px"><table><thead><tr><th>Product code</th><th>Category</th><th>Product name</th><th>Capacity</th><th>UOM</th><th class="num">In inventory</th></tr></thead>
+     <tbody>${PRODUCTS.length?PRODUCTS.map(pr=>`<tr><td class="mono"><b>${esc(pr.code)}</b></td><td>${esc(pr.cat)}</td><td>${esc(pr.name)}</td>
+       <td class="mono">${esc(pr.cap)}</td><td>${esc(pr.uom)}</td>
+       <td class="num">${N(stockRows().filter(r=>r.cat===pr.cat&&r.desc.includes(pr.name)).reduce((a,r)=>a+r.qty,0))}</td></tr>`).join('')
+       :'<tr><td colspan="6"><div class="empty"><b>No product master loaded</b>Upload Buyback_Product_Master.xlsx under Master data upload.</div></td></tr>'}</tbody></table></div></div>
+     <div class="section-h">Make master</div>
+     <div class="panel"><div class="pad"><div class="filechips">${makeList().map(m=>`<span>${esc(m)}</span>`).join('')}</div></div></div>`;
+  } else if(t==='user'){
+    body=`<div class="panel"><div class="tbl-scroll" style="max-height:520px"><table><thead><tr><th>Employee ID</th><th>Employee name</th><th>Email</th><th>Branch</th><th>Region</th><th>Department</th><th>Role</th><th>Active</th></tr></thead>
+     <tbody>${USERS.length?USERS.map(u=>`<tr><td class="mono"><b>${u.id}</b></td><td>${esc(u.name)}</td><td><small>${esc(u.email)}</small></td><td>${esc(u.branch)}</td>
+      <td>${u.region}</td><td>${esc(u.dept)}</td><td>${ROLE_LABEL[u.role]}</td><td><span class="tag t-teal">Yes</span></td></tr>`).join('')
+      :'<tr><td colspan="8"><div class="empty"><b>No user master loaded</b>Upload Buyback_User_Master.xlsx under Master data upload.</div></td></tr>'}</tbody></table></div></div>`;
+  } else if(t==='branch'){
+    body=`<div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Branch code</th><th>Branch name</th><th>State</th><th>Region</th><th>Status</th></tr></thead>
+     <tbody>${BRANCH_MASTER.map(b=>`<tr><td class="mono"><b>${b.code}</b></td><td>${esc(b.name)}</td><td>${esc(b.state)}</td><td>${b.region}</td><td><span class="tag t-teal">${b.status}</span></td></tr>`).join('')}</tbody></table></div></div>`;
+  } else if(t==='cust'){
+    const used={}; DB.provisions.forEach(p=>used[p.customer]=(used[p.customer]||0)+1);
+    body=`<div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Customer name</th><th class="num">Provisions</th><th class="num">Units provisioned</th></tr></thead>
+     <tbody>${CUSTOMERS.map(c=>`<tr><td><b>${esc(c)}</b></td><td class="num">${used[c]||0}</td>
+      <td class="num">${N(DB.provisions.filter(p=>p.customer===c).reduce((s,p)=>s+provQty(p),0))}</td></tr>`).join('')}</tbody></table></div></div>`;
+  } else if(t==='cat'){
+    body=`<div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Category</th><th>Products in master</th><th class="num">Units in inventory</th></tr></thead>
+     <tbody>${catList().map(c=>`<tr><td><b>${c}</b></td><td>${N(prodList(c).length)} products · ${esc(prodList(c).slice(0,4).join(', '))}${prodList(c).length>4?' …':''}</td>
+      <td class="num">${N(stockRows().filter(r=>r.cat===c).reduce((s,r)=>s+r.qty,0))}</td></tr>`).join('')}</tbody></table></div></div>`;
+  } else if(t==='cond'){
+    body=`<div class="panel"><div class="tbl-scroll"><table><thead><tr><th>Condition</th><th>Routes to</th><th class="num">Units</th></tr></thead>
+     <tbody>${CONDITIONS.map(c=>`<tr><td>${clsTag(c)}</td><td>${c==='Scrap'?'Scrap disposal queue':c==='Need Repair'?'Repair queue':'Reuse inventory queue, then transfer to branch service stock'}</td>
+      <td class="num">${N(stockRows().filter(r=>r.cond===c).reduce((s,r)=>s+r.qty,0))}</td></tr>`).join('')}</tbody></table></div></div>`;
+  } else if(t==='sp'){
+    body=`<div class="panel"><div class="pad"><p style="margin:0 0 12px;color:var(--muted)">Document repository structure provisioned in SharePoint Online, one folder per provision under each node.</p>
+     ${['Provisions','Receipt Photos','Additional Inventory','Audit Reports','Scrap Disposal','Reusable Material Transfer']
+      .map(f=>`<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:9px 0"><span><b>/Buyback Repository/${f}</b></span><small style="color:var(--muted)">${f==='Provisions'?DB.provisions.length+' folders':f==='Additional Inventory'?DB.additional.length+' entries':'auto-filed'}</small></div>`).join('')}</div></div>`;
+  } else {
+    const c=CONFIG, synced=c.flowUrl?'<span class="tag t-teal">Configured</span>':'<span class="tag t-amber">Not configured</span>';
+    body=`<div class="banner"><b>Nothing here is hardcoded</b>
+      <p>These values connect the portal to your own Microsoft 365 tenant. They are entered once by an Admin and stored only in this browser's IndexedDB — never in the application file. Leave a section blank to keep that feature disabled.</p></div>
+     <div class="rowsplit" style="margin-top:14px">
+      <div class="panel"><header><div><h3>Sign-in via Power Automate</h3><p>No Azure AD App Registration needed — the flow uses its own SharePoint connection to check your existing user list</p></div></header>
+       <div class="pad">
+        <div class="fg"><label class="f">Login Power Automate HTTP trigger URL</label><input class="inp" id="cfgLoginFlow" value="${esc(c.loginFlowUrl)}" placeholder="https://prod-00.westus.logic.azure.com/workflows/..."></div>
+        <div class="hint">
+         Build this as a separate flow from the data-sync one below:<br>
+         1. Trigger — <code>When an HTTP request is received</code>, Request Body JSON Schema:<br>
+         <code>{"type":"object","properties":{"id":{"type":"string"},"password":{"type":"string"}}}</code><br>
+         2. Action — SharePoint <code>Get items</code> on your existing users list, Filter Query:<br>
+         <code>EmployeeID eq '@{triggerBody()?['id']}'</code> (use your list's actual Employee ID column name)<br>
+         3. Condition — <code>length(body('Get_items')?['value'])</code> is greater than <code>0</code>, AND the item's <code>Password</code> column equals <code>triggerBody()?['password']</code><br>
+         4. If yes — <code>Response</code> (200) with body:<br>
+         <code>{"success":true,"user":{"id":"...","name":"...","email":"...","role":"...","branch":"...","region":"...","dept":"..."}}</code><br>
+         mapped from the matching SharePoint item's columns.<br>
+         5. If no — <code>Response</code> (200) with body <code>{"success":false,"message":"Employee ID or password is incorrect."}</code><br>
+         The flow's own connection reads SharePoint, so no client-side Azure AD app, tenant ID or client ID is ever needed. Keep this trigger URL private — it is the only thing protecting it — and consider adding a Condition that rejects requests missing an expected header/key if you want an extra layer.
+        </div>
+       </div></div>
+      <div class="panel"><header><div><h3>Master data sync via Power Automate</h3><p>${c.masterFlowUrl?'<span class="tag t-teal">Configured</span>':'<span class="tag t-amber">Not configured</span>'} — makes an Admin's Excel upload visible to every other user, in every browser</p></div></header>
+       <div class="pad">
+        <div class="fg"><label class="f">Master data Power Automate HTTP trigger URL</label><input class="inp" id="cfgMasterFlow" value="${esc(c.masterFlowUrl)}" placeholder="https://prod-00.westus.logic.azure.com/workflows/..."></div>
+        <div class="hint">
+         Without this, an Admin's uploaded User/Product/Branch/Customer master only lives in that Admin's own browser (IndexedDB) — nobody else ever sees it. Build one more flow, plus one SharePoint list, to fix that:<br>
+         1. List — create <code>Buyback Master Data</code> with columns <code>MasterDataJSON</code> (Multiple lines of text, Plain text), <code>UpdatedBy</code> (Single line), <code>UpdatedAt</code> (Single line). Seed one item with <code>Title = latest</code>.<br>
+         2. Trigger — <code>When an HTTP request is received</code>. Generate the schema from a sample save request, then open the schema in the code editor and delete its <code>"required"</code> array — a fetch request won't include every field.<br>
+         3. Condition — <code>triggerBody()?['mode']</code> is equal to <code>fetch</code>.<br>
+         4. <b>Yes</b> (a browser asking for the current master data) — SharePoint <code>Get items</code> on <code>Buyback Master Data</code>, Filter Query <code>Title eq 'latest'</code>, then <code>Response</code> (200) with body:<br>
+         <code>{"success":true,"data":json(coalesce(first(body('Get_items')?['value'])?['MasterDataJSON'],'{}'))}</code><br>
+         5. <b>No</b> (an Admin just uploaded new masters) — <code>Get items</code> the same way, then a Condition on whether it exists: <code>Update item</code> if yes / <code>Create item</code> if no, setting <code>MasterDataJSON</code> to <code>string(triggerBody())</code>, <code>UpdatedBy</code> to <code>triggerBody()?['by']</code>, <code>UpdatedAt</code> to <code>utcNow()</code>. Then <code>Response</code> (200) <code>{"success":true}</code>.<br>
+         The portal calls this same URL both ways — once to push after every Admin upload, and once at sign-in for every user to pull the latest copy.
+        </div>
+       </div></div>
+      <div class="panel"><header><div><h3>SharePoint data sync via Power Automate</h3><p>${synced} — raw payloads are POSTed to this flow, which writes to SharePoint</p></div></header>
+       <div class="pad">
+        <div class="fg"><label class="f">Power Automate HTTP trigger URL</label><input class="inp" id="cfgFlow" value="${esc(c.flowUrl)}" placeholder="https://prod-00.westus.logic.azure.com/workflows/..."></div>
+        <div class="fg"><label class="f">SharePoint site</label><input class="inp" id="cfgSite" value="${esc(c.spSite)}" placeholder="https://yourtenant.sharepoint.com/sites/Buyback"></div>
+        <div class="fg"><label class="f">List / library name</label><input class="inp" id="cfgList" value="${esc(c.spList)}"></div>
+       </div></div>
+     </div>
+     <div class="section-h">Session security</div>
+     <div class="panel"><div class="pad">
+       <div class="fg" style="max-width:220px"><label class="f">Idle sign-out (minutes)</label><input class="inp" id="cfgTimeout" type="number" min="2" value="${c.sessionTimeoutMin}"></div>
+       <button class="btn" onclick="saveConfigFromForm()">Save cloud &amp; security settings</button>
+       <div class="hint" style="margin-top:14px">Sign-in already locks for 60 seconds after ${c.maxLoginAttempts} failed password attempts, and every table value is HTML-escaped before rendering. A browser-only file can never fully replace server-side access control — for production use, host this behind your own authenticated backend or SharePoint page.</div>
+     </div></div>`;
+  }
+  return tabs+body;
+}
+
+/* ============================================================
+   EXPORT / PRINT
+   ============================================================ */
+function dl(name,text){
+  const b=new Blob([text],{type:'text/csv;charset=utf-8'}), u=URL.createObjectURL(b);
+  const a=document.createElement('a'); a.href=u; a.download=name; a.click(); URL.revokeObjectURL(u);
+  toast('Downloaded',name);
+}
+const csvRow=a=>a.map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(',');
+function exportProv(){
+  const rows=[csvRow(['Provision Number','UID Number','Customer Name','Customer Address','Location','State','PO Number','PO Date','Project ID','Project Name','Project Manager','Branch','Region','Expected Receipt Date','Status','Provision Qty','Received Qty','Variance %'])];
+  applyFilter(visible()).forEach(p=>rows.push(csvRow([p.id,p.uidNo,p.customer,p.custAddress,p.location,p.state,p.po,p.poDate,p.projectId,p.projectName,p.pm,p.branch,p.region,p.expDate,p.status,provQty(p),recvQty(p),varPct(p).toFixed(2)])));
+  dl('buyback_provisions_'+today()+'.csv',rows.join('\n'));
+}
+function exportInv(){
+  const rows=[csvRow(['Branch','Description','Category','Quantity','Condition','Classification queue','Storage Location','Rack','Source','Additional Inventory','Received Date','Age (days)'])];
+  stockRows().forEach(r=>rows.push(csvRow([r.branch,r.desc,r.cat,r.qty,r.cond,r.cond==='Scrap'?'Scrap disposal':r.cond==='Need Repair'?'Repair':'Reuse',r.loc,r.rack,r.src,r.addl?'YES':'NO',r.date,r.date?days(r.date):''])));
+  dl('buyback_inventory_'+today()+'.csv',rows.join('\n'));
+}
+function exportAddl(){
+  const rows=[csvRow(['Receipt Date','UID Number','Site ID','ATM ID','Customer Name','Location with Address','Branch','Material Description','Category','Capacity','Make','UOM','Quantity','Condition','Storage Location','Photograph','Remarks','Additional Inventory','Entered By'])];
+  visibleAdditional().forEach(a=>rows.push(csvRow([a.date,a.uidNo,a.site,a.atm,a.cust,a.addr,a.branch,addlDesc(a),a.cat,a.cap,a.make,a.uom,a.cond,a.loc,a.photo,a.remarks,'YES',userName(a.by)])));
+  dl('additional_material_'+today()+'.csv',rows.join('\n'));
+}
+async function adminUpload(el){
+  const out=[];
+  for(const f of [...el.files]){
+    try{ const r=await readFileAsWorkbook(f); out.push(f.name+(r?' — loaded':' — no recognised sheet')); }
+    catch(e){ out.push(f.name+' — '+e.message); }
+  }
+  cacheMasters(); render();
+  const m=document.getElementById('admMsg'); if(m) m.textContent=out.join(' · ');
+  if(CONFIG.masterFlowUrl){
+    const r=await syncMastersToCloud();
+    toast('Master data updated',USERS.length+' users · '+PRODUCTS.length+' products'+(r.ok?' — pushed to SharePoint, other users will see this on next sign-in.':' — could not reach SharePoint, so only this browser has it for now.'));
+  } else {
+    toast('Master data updated',USERS.length+' users · '+PRODUCTS.length+' products'+' — set the Master data Power Automate URL under Cloud & security so other users get this too.');
+  }
+}
+function exportProducts(){
+  const rows=[csvRow(['Product Code','Category','Product Name','Capacity','UOM','Active'])];
+  PRODUCTS.forEach(pr=>rows.push(csvRow([pr.code,pr.cat,pr.name,pr.cap,pr.uom,'Yes'])));
+  dl('product_master_'+today()+'.csv',rows.join('\n'));
+}
+function printAudit(id){
+  const p=byId(id);
+  document.getElementById('printArea').innerHTML=`
+   <div style="font-family:Arial,sans-serif;color:#111">
+    <div style="border-bottom:3px solid #0b3f7a;padding-bottom:10px;margin-bottom:16px">
+      <img src="${LOGO}" style="width:220px"><h1 style="margin:10px 0 2px">Buyback audit report</h1>
+      <div style="color:#555">${p.id} · UID ${esc(p.uidNo)} · ${esc(p.customer)} · ${esc(p.branch)} · generated ${fmtD(today())}</div></div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px">
+      <tr><td style="padding:3px 0"><b>PO number</b></td><td>${esc(p.po)}</td><td><b>PO date</b></td><td>${fmtD(p.poDate)}</td></tr>
+      <tr><td style="padding:3px 0"><b>Project</b></td><td>${esc(p.projectId)} — ${esc(p.projectName)}</td><td><b>Project manager</b></td><td>${esc(p.pm)}</td></tr>
+      <tr><td style="padding:3px 0"><b>Location / state</b></td><td>${esc(p.location)}, ${esc(p.state)}</td><td><b>Auditor</b></td><td>${esc(userName(p.audit.by))}</td></tr>
+      <tr><td style="padding:3px 0"><b>Quantity expected</b></td><td>${N(p.audit.expected)}</td><td><b>Quantity found</b></td><td>${N(p.audit.found)}</td></tr></table>
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+     <thead><tr>${['Category','Material','Provision qty','Received','Balance','Condition wise receipt'].map(h=>`<th style="border:1px solid #bbb;background:#eef2f7;padding:5px;text-align:left">${h}</th>`).join('')}</tr></thead>
+     <tbody>${p.items.map(i=>`<tr>${[esc(i.cat),esc(itemDesc(i)),N(i.qty),N(itemRecv(i)),N(balance(i)),
+       (i.receipts||[]).map(r=>esc(r.cond)+' &mdash; '+N(r.qty)+' nos').join('<br>')||'—']
+       .map(c=>`<td style="border:1px solid #bbb;padding:5px;vertical-align:top">${c}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    <p style="margin-top:16px;font-size:12px"><b>Observation</b><br>${esc(p.audit.observation)}</p>
+    <p style="font-size:12px"><b>Decision</b> — ${esc(p.audit.decision)}</p>
+    <div style="margin-top:46px;display:flex;justify-content:space-between;color:#555;font-size:12px">
+      <div style="border-top:1px solid #999;padding-top:5px;width:30%">Branch in-charge</div>
+      <div style="border-top:1px solid #999;padding-top:5px;width:30%">HO audit</div>
+      <div style="border-top:1px solid #999;padding-top:5px;width:30%">Head — Operations</div></div>
+   </div>`;
+  window.print();
+}
+function printReport(kind){
+  const title={branch:'Branch audit report',var:'Variance report',miss:'Missing material report'}[kind];
+  const tbl=document.querySelector('#view table');
+  document.getElementById('printArea').innerHTML=`
+   <div style="font-family:Arial,sans-serif;color:#111">
+    <div style="border-bottom:3px solid #0b3f7a;padding-bottom:10px;margin-bottom:16px">
+      <img src="${LOGO}" style="width:220px"><h1 style="margin:10px 0 2px">${title}</h1>
+      <div style="color:#555">Generated ${fmtD(today())} by ${esc(ME.name)} · ${ME.role==='Branch'?esc(ME.branch):'All branches'}</div></div>
+    ${tbl?'<table style="width:100%;border-collapse:collapse;font-size:11px">'+tbl.innerHTML+'</table>':'<p>No data</p>'}
+   </div>`;
+  const st=document.createElement('style'); st.id='pstyle';
+  st.textContent='#printArea th,#printArea td{border:1px solid #bbb;padding:4px;text-align:left}#printArea th{background:#eef2f7}';
+  document.head.appendChild(st);
+  window.print();
+  setTimeout(()=>{const e=document.getElementById('pstyle');if(e)e.remove();},500);
+}
+
+boot();
+</script>
+</body>
+</html>
