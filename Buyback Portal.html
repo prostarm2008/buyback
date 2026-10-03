@@ -669,6 +669,8 @@ async function boot(){
   DB=await load();
   masterBanner();
   armIdleTimer();
+  const resumed=await restoreSession();
+  if(!resumed) await pullAndMerge(false);
 }
 const ROLE_LABEL={Project:'Project team',Branch:'Branch team',Audit:'HO audit team',Admin:'Administrator'};
 
@@ -694,7 +696,171 @@ function emptyDB(){
    ============================================================ */
 let DB=null, ME=null, PAGE='dash', OPEN=null, FILTER={}, TAB={};
 async function load(){ try{const r=await idbGet(KEY); if(r) return r;}catch(e){} return emptyDB(); }
-function save(){ idbSet(KEY,DB); syncToCloud('buyback-db-snapshot',DB); }
+function save(){ DB.updatedAt=stamp(); idbSet(KEY,DB); syncToCloud('buyback-db-snapshot',DB); }
+
+/* ============================================================
+   SHARED RECORDS — pull as well as push
+   Every browser keeps its own IndexedDB copy, so a provision
+   raised by the project team was invisible to the branch until
+   the branch pulled it down. save() pushes a snapshot; these
+   functions fetch the shared snapshot back and merge it with
+   whatever is local, newest record wins. Runs at boot, at
+   sign-in, every 60 seconds, and on demand from the rail.
+   ============================================================ */
+let SYNC_STATE={at:null,ok:false,msg:'not started'}, _pullTimer=null, _pulling=false;
+
+/* Power Automate returns the snapshot in whatever shape the flow
+   author happened to build: the object itself, wrapped in data /
+   payload / body, as a JSON string, or as the {$content-type,$content}
+   envelope that "Get file content" produces. Rather than demanding one
+   exact shape, search the response for the first object that carries a
+   provisions array. */
+let LAST_FETCH_PREVIEW='';
+function b64json(str){
+  try{
+    const bin=atob(str);
+    try{ return JSON.parse(decodeURIComponent(escape(bin))); }
+    catch(e){ return JSON.parse(bin); }
+  }catch(e){ return null; }
+}
+function unwrapSnapshot(raw){
+  const seen=new Set(), queue=[raw];
+  let guard=0;
+  while(queue.length&&guard++<500){
+    let d=queue.shift();
+    if(d==null) continue;
+    if(typeof d==='string'){
+      const t=d.trim();
+      if(t.startsWith('{')||t.startsWith('[')){ try{ queue.push(JSON.parse(t)); }catch(e){} }
+      else if(t.length>40&&/^[A-Za-z0-9+/=\s]+$/.test(t)){ const j=b64json(t); if(j) queue.push(j); }
+      continue;
+    }
+    if(typeof d!=='object') continue;
+    if(Array.isArray(d)){ d.forEach(x=>queue.push(x)); continue; }
+    if(seen.has(d)) continue;
+    seen.add(d);
+    if(Array.isArray(d.provisions)) return d;
+    if(typeof d.$content==='string'){ const j=b64json(d.$content); if(j) queue.push(j); }
+    Object.keys(d).forEach(k=>{ if(k!=='$content') queue.push(d[k]); });
+  }
+  return null;
+}
+async function fetchDbFromCloud(){
+  if(!CONFIG.flowUrl) return null;
+  const res=await fetch(CONFIG.flowUrl,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({kind:'buyback-db-snapshot', mode:'fetch',
+      site:CONFIG.spSite, list:CONFIG.spList, ts:stamp(), by:ME?ME.id:''})
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status);
+  const text=await res.text();
+  LAST_FETCH_PREVIEW=(text||'').replace(/\s+/g,' ').slice(0,140);
+  if(!text.trim()) return 'EMPTY';
+  let raw;
+  try{ raw=JSON.parse(text); }
+  catch(e){ return 'EMPTY'; }
+  return unwrapSnapshot(raw)||'EMPTY';
+}
+
+/* newest-touch timestamp for one provision */
+function provTouch(p){
+  let t=p.updatedAt||p.provDate||'';
+  (p.log||[]).forEach(l=>{ if(l.t>t) t=l.t; });
+  return t;
+}
+function mergeDB(local,remote){
+  if(!remote) return {db:local,changed:false,pulled:0};
+  const out={v:local.v||5, provisions:[], additional:[], meta:{}, seq:1, notif:[], transfers:[]};
+  const localNewer=(local.updatedAt||'')>=(remote.updatedAt||'');
+  let pulled=0, changed=false;
+
+  // provisions — match on id, keep whichever was touched last
+  const byId={};
+  (remote.provisions||[]).forEach(p=>{ byId[p.id]={p,side:'r'}; });
+  (local.provisions||[]).forEach(p=>{
+    const ex=byId[p.id];
+    if(!ex){ byId[p.id]={p,side:'l'}; changed=true; }
+    else if(provTouch(p)>provTouch(ex.p)){ byId[p.id]={p,side:'l'}; changed=true; }
+  });
+  Object.values(byId).forEach(x=>{ if(x.side==='r'&&!(local.provisions||[]).some(p=>p.id===x.p.id)) pulled++; });
+  out.provisions=Object.values(byId).map(x=>x.p)
+    .sort((a,b)=>String(b.provDate||'').localeCompare(String(a.provDate||'')));
+
+  // additional material — union on id
+  const ad={};
+  (remote.additional||[]).forEach(a=>ad[a.id]=a);
+  (local.additional||[]).forEach(a=>{ if(!ad[a.id]){ ad[a.id]=a; changed=true; } });
+  out.additional=Object.values(ad);
+
+  // queue metadata — side with the newer snapshot wins a contested key
+  out.meta=Object.assign({}, localNewer?(remote.meta||{}):(local.meta||{}),
+                             localNewer?(local.meta||{}):(remote.meta||{}));
+
+  // notifications — union on id, newest first, capped
+  const nt={};
+  (remote.notif||[]).concat(local.notif||[]).forEach(n=>{ if(n&&n.id) nt[n.id]=n; });
+  out.notif=Object.values(nt).sort((a,b)=>String(b.t||'').localeCompare(String(a.t||''))).slice(0,150);
+
+  const tr={};
+  (remote.transfers||[]).concat(local.transfers||[]).forEach(t=>{ if(t&&t.id) tr[t.id]=t; });
+  out.transfers=Object.values(tr);
+
+  // sequence counter must clear every provision number already issued
+  let maxSeq=Math.max(+local.seq||1, +remote.seq||1);
+  out.provisions.forEach(p=>{
+    const n=parseInt(String(p.id).split('-').pop(),10);
+    if(!isNaN(n)&&n+1>maxSeq) maxSeq=n+1;
+  });
+  out.seq=maxSeq;
+  out.updatedAt=stamp();
+  return {db:out,changed,pulled};
+}
+
+async function pullAndMerge(announce){
+  if(_pulling) return;
+  if(!CONFIG.flowUrl){ SYNC_STATE={at:new Date(),ok:false,msg:'SharePoint flow URL not configured'}; if(announce) toast('Not configured','Set the Power Automate flow URL under Admin ▸ Cloud & security.'); return; }
+  _pulling=true;
+  try{
+    const remote=await fetchDbFromCloud();
+    if(remote===null){
+      SYNC_STATE={at:new Date(),ok:false,msg:'Flow URL not set'};
+      if(announce) toast('Not configured','Set the Power Automate flow URL under Admin ▸ Cloud & security.');
+      return;
+    }
+    if(remote==='EMPTY'){
+      /* The flow answered but sent no snapshot. Either its fetch branch is
+         not built yet, or nothing has been saved to SharePoint so far.
+         Push what this browser holds so the first record is at least
+         shared, and report exactly what came back. */
+      const own=DB&&DB.provisions.length?DB.provisions.length:0;
+      if(own) syncToCloud('buyback-db-snapshot',DB);
+      SYNC_STATE={at:new Date(),ok:false,
+        msg:'Flow replied without a snapshot'+(LAST_FETCH_PREVIEW?' — it sent: '+LAST_FETCH_PREVIEW:' (empty body)')};
+      if(announce) toast('No snapshot returned',
+        'The flow answered but sent no data. Its mode:"fetch" branch must return the stored snapshot — see REQUIRED-flow-change.');
+      if(ME) render();
+      return;
+    }
+    const before=DB?DB.provisions.length:0;
+    const {db,changed,pulled}=mergeDB(DB||emptyDB(),remote);
+    DB=db;
+    await idbSet(KEY,DB);
+    if(changed) syncToCloud('buyback-db-snapshot',DB);
+    SYNC_STATE={at:new Date(),ok:true,msg:DB.provisions.length+' provisions in view'+(pulled?', '+pulled+' pulled from SharePoint':'')};
+    if(ME) render();
+    if(announce) toast('Synced',pulled?pulled+' record'+(pulled>1?'s':'')+' pulled from SharePoint.':'Already up to date.');
+    else if(DB.provisions.length>before&&ME) toast('New records',(DB.provisions.length-before)+' provision(s) arrived from SharePoint.');
+  }catch(e){
+    SYNC_STATE={at:new Date(),ok:false,msg:e.message};
+    if(announce) toast('Sync failed',e.message);
+  }finally{ _pulling=false; }
+}
+function startAutoPull(){
+  if(_pullTimer) clearInterval(_pullTimer);
+  _pullTimer=setInterval(()=>{ if(ME&&!document.hidden) pullAndMerge(false); },60000);
+}
+function stopAutoPull(){ if(_pullTimer) clearInterval(_pullTimer); _pullTimer=null; }
+const syncLabel=()=>SYNC_STATE.at?SYNC_STATE.at.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'never';
 function resetAll(){ DB=emptyDB(); save(); render(); toast('Data cleared','All records removed from this browser. This does not affect anything already synced to SharePoint.'); }
 
 const provQty=p=>p.items.reduce((s,i)=>s+ +i.qty,0);
@@ -770,16 +936,46 @@ async function doLogin(){
   LOGIN_ATTEMPTS=0; e.textContent=''; document.getElementById('pwd').value='';
   completeLogin(u);
 }
-function completeLogin(u){
+/* ---------- session survives a page refresh ----------
+   ME used to live only in memory, so F5 dropped the user back to
+   the sign-in screen. The signed-in user is now written to
+   IndexedDB with a last-active stamp, restored at boot, and
+   discarded once the idle timeout has passed or on sign out.
+   No password is ever stored. */
+const SESS_KEY='prostarm.buyback.session';
+let _sessTouched=0;
+function saveSession(){
+  if(!ME) return;
+  idbSet(SESS_KEY,{u:ME,at:Date.now()});
+  _sessTouched=Date.now();
+}
+function touchSession(){
+  if(!ME) return;
+  if(Date.now()-_sessTouched>30000) saveSession();
+}
+async function restoreSession(){
+  try{
+    const s=await idbGet(SESS_KEY);
+    if(!s||!s.u||!s.u.id) return false;
+    const mins=CONFIG.sessionTimeoutMin||20;
+    if(Date.now()-(s.at||0)>mins*60000){ await idbDel(SESS_KEY); return false; }
+    completeLogin(s.u,true);
+    return true;
+  }catch(e){ return false; }
+}
+function completeLogin(u,restored){
   ME=u; PAGE=u.role==='Branch'?'action':'dash'; OPEN=null;
   document.getElementById('login').style.display='none';
   document.getElementById('shell').style.display='grid';
-  render(); armIdleTimer();
-  toast('Signed in as '+u.name, ROLE_LABEL[u.role]+' · '+u.branch+(u.role!=='Admin'?' — the "Masters & administration" menu only shows for Admin accounts.':''));
+  render(); armIdleTimer(); saveSession(); startAutoPull();
+  pullAndMerge(false);
+  if(!restored)
+    toast('Signed in as '+u.name, ROLE_LABEL[u.role]+' · '+u.branch+(u.role!=='Admin'?' — the "Masters & administration" menu only shows for Admin accounts.':''));
 }
 function logout(){
   ME=null; OPEN=null; document.getElementById('shell').style.display='none'; document.getElementById('login').style.display='grid';
-  document.getElementById('pwd').value=''; masterBanner(); clearIdleTimer();
+  document.getElementById('pwd').value=''; masterBanner(); clearIdleTimer(); stopAutoPull();
+  idbDel(SESS_KEY);
 }
 /* ---------- idle session timeout ---------- */
 let _idleTimer=null;
@@ -789,7 +985,8 @@ function armIdleTimer(){
   _idleTimer=setTimeout(()=>{ if(ME){ toast('Signed out','No activity for '+mins+' minutes.'); logout(); } }, mins*60000);
 }
 function clearIdleTimer(){ if(_idleTimer) clearTimeout(_idleTimer); _idleTimer=null; }
-['click','keydown','mousemove'].forEach(ev=>document.addEventListener(ev,()=>{ if(ME) armIdleTimer(); },{passive:true}));
+['click','keydown','mousemove'].forEach(ev=>document.addEventListener(ev,()=>{ if(ME){ armIdleTimer(); touchSession(); } },{passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&ME) pullAndMerge(false); });
 
 /* ============================================================
    NAV
@@ -821,7 +1018,11 @@ function drawNav(){
   const c=counts();
   document.getElementById('nav').innerHTML=Object.entries(PAGES).filter(([k,p])=>p.roles.includes(ME.role))
     .map(([k,p])=>`<a class="${k===PAGE?'on':''}" onclick="go('${k}')" tabindex="0" onkeydown="if(event.key==='Enter')go('${k}')">${p.t}${c[k]?`<span class="pill">${c[k]}</span>`:''}</a>`).join('');
-  document.getElementById('railMe').innerHTML=`<b>${esc(ME.name)}</b><span>${ROLE_LABEL[ME.role]} · ${esc(ME.branch)}</span><button onclick="logout()">Sign out</button>`;
+  document.getElementById('railMe').innerHTML=`<b>${esc(ME.name)}</b><span>${ROLE_LABEL[ME.role]} · ${esc(ME.branch)}</span>`+
+    `<span style="display:block;margin-top:6px;font-size:11px;color:${SYNC_STATE.ok?'#7ea9d4':'#ff9aa6'}">`+
+      `${SYNC_STATE.ok?'Synced '+syncLabel():'Sync: '+esc(SYNC_STATE.msg)}</span>`+
+    `<button onclick="pullAndMerge(true)">Refresh from SharePoint</button>`+
+    `<button onclick="logout()">Sign out</button>`;
 }
 function go(p){ PAGE=p; OPEN=null; document.getElementById('rail').classList.remove('open'); render(); window.scrollTo(0,0); }
 document.getElementById('burger').onclick=()=>document.getElementById('rail').classList.toggle('open');
@@ -1190,7 +1391,8 @@ function submitProvision(id){
   notify(USERS.filter(u=>u.role==='Branch'&&u.branch===p.branch).map(u=>u.email).join(', '),
     `[Buyback] Action required — ${p.id} at ${p.branch}`,
     `${p.customer}, ${p.location}. UID ${p.uidNo}, PO ${p.po}. ${N(provQty(p))} units across ${p.items.length} line items. Expected receipt by ${fmtD(p.expDate)}.`,p.id);
-  save(); render(); toast('Submitted',p.branch+' now shows this under Action required.');
+  save(); render(); pullAndMerge(false);
+  toast('Submitted',p.branch+' now shows this under Action required.');
 }
 function receiptForm(pid,iid){
   const p=byId(pid), i=p.items.find(x=>x.id===iid), bal=balance(i);
